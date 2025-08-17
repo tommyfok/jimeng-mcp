@@ -35,7 +35,6 @@ npm install @tommyfok/jimeng-mcp
 ```env
 JIMENG_ACCESS_KEY=your_access_key_here
 JIMENG_SECRET_KEY=your_secret_key_here
-JIMENG_ENDPOINT=https://api.jimeng.com
 ```
 
 ## 使用方法
