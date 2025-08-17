@@ -1,5 +1,5 @@
 {
-  "name": "jimeng-mcp",
+  "name": "jimeng-image-mcp",
   "version": "0.1.0",
   "description": "MCP service for Jimeng Image Generation API",
   "type": "module",
