@@ -47,23 +47,6 @@ JIMENG_SECRET_KEY=your_secret_key_here
 {
   "mcpServers": {
     "jimeng": {
-      "command": "node",
-      "args": ["/path/to/your/jimeng-mcp/dist/index.js"],
-      "env": {
-        "JIMENG_ACCESS_KEY": "your_access_key_here",
-        "JIMENG_SECRET_KEY": "your_secret_key_here"
-      }
-    }
-  }
-}
-```
-
-或者使用 npm 包：
-
-```json
-{
-  "mcpServers": {
-    "jimeng": {
       "command": "npx",
       "args": ["jimeng-image-mcp", "serve"],
       "env": {
@@ -88,7 +71,7 @@ npm start
 ### 在代码中使用
 
 ```typescript
-import { JimengMCPServer } from '@tommyfok/jimeng-mcp';
+import { JimengMCPServer } from 'jimeng-image-mcp';
 
 const server = new JimengMCPServer({
   accessKey: process.env.JIMENG_ACCESS_KEY!,
@@ -104,10 +87,10 @@ await server.run();
 
 ```bash
 # 安装 CLI 工具
-npm install -g @tommyfok/jimeng-mcp
+npm install -g jimeng-image-mcp
 
 # 使用 CLI
-jimeng-mcp --help
+jimeng-image-mcp --help
 ```
 
 ## MCP 协议支持

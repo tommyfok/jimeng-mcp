@@ -72,7 +72,7 @@ try {
   console.log(`版本: ${packageJson.version}`);
   console.log(`描述: ${packageJson.description}`);
   console.log(`入口文件: ${packageJson.main}`);
-  console.log(`CLI 工具: ${packageJson.bin['jimeng-mcp']}`);
+  console.log(`CLI 工具: ${packageJson.bin['jimeng-image-mcp']}`);
   console.log(`包含文件: ${packageJson.files.join(', ')}`);
 
   console.log('\n🎉 所有检查通过！可以发布到 npm 了');

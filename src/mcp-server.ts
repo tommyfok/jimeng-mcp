@@ -28,8 +28,8 @@ export class JimengMCPServer {
 
     // 创建 MCP 服务器实例
     this.server = new McpServer({
-      name: 'jimeng-mcp',
-      version: '1.0.0',
+      name: 'jimeng-image-mcp',
+      version: '0.2.2',
     });
 
     this.setupTools();
