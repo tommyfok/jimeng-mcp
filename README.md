@@ -25,7 +25,7 @@
 ## 安装
 
 ```bash
-npm install @tommyfok/jimeng-mcp
+npm install jimeng-mcp
 ```
 
 ## 环境配置
@@ -65,7 +65,7 @@ JIMENG_SECRET_KEY=your_secret_key_here
   "mcpServers": {
     "jimeng": {
       "command": "npx",
-      "args": ["@tommyfok/jimeng-mcp"],
+      "args": ["jimeng-mcp"],
       "env": {
         "JIMENG_ACCESS_KEY": "your_access_key_here",
         "JIMENG_SECRET_KEY": "your_secret_key_here"

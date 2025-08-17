@@ -1,6 +1,6 @@
 {
-  "name": "@tommyfok/jimeng-mcp",
-  "version": "0.0.1",
+  "name": "jimeng-mcp",
+  "version": "0.1.0",
   "description": "MCP service for Jimeng Image Generation API",
   "type": "module",
   "main": "dist/index.js",
