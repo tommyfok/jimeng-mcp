@@ -9,24 +9,28 @@ async function main() {
   try {
     // 从环境变量获取配置
     const config: JimengConfig = {
-      apiKey: process.env.JIMENG_API_KEY || '',
+      accessKey: process.env.JIMENG_ACCESS_KEY || '',
       secretKey: process.env.JIMENG_SECRET_KEY || '',
-      endpoint: process.env.JIMENG_ENDPOINT
+      endpoint: process.env.JIMENG_ENDPOINT,
     };
 
     // 验证必需参数
-    if (!config.apiKey) {
-      console.error('Error: JIMENG_API_KEY environment variable is required');
+    if (!config.accessKey) {
+      console.error(
+        'Error: JIMENG_ACCESS_KEY environment variable is required'
+      );
       process.exit(1);
     }
 
     if (!config.secretKey) {
-      console.error('Error: JIMENG_SECRET_KEY environment variable is required');
+      console.error(
+        'Error: JIMENG_SECRET_KEY environment variable is required'
+      );
       process.exit(1);
     }
 
     console.error('Starting Jimeng MCP server...');
-    console.error(`API Key: ${config.apiKey.substring(0, 8)}...`);
+    console.error(`API Key: ${config.accessKey.substring(0, 8)}...`);
     console.error(`Secret Key: ${config.secretKey.substring(0, 8)}...`);
     if (config.endpoint) {
       console.error(`Endpoint: ${config.endpoint}`);

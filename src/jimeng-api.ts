@@ -1,148 +1,272 @@
 import axios, { AxiosInstance } from 'axios';
-import { 
-  JimengConfig, 
-  ImageGenerationRequest, 
+import {
+  JimengConfig,
+  ImageGenerationRequest,
   ImageGenerationResponse,
   TaskQueryRequest,
-  TaskQueryResponse 
+  TaskQueryResponse,
+  TaskQueryConfig,
+  JIMENG_API_CONSTANTS,
 } from './types.js';
+import { VolcengineAuth } from './auth.js';
 
+/**
+ * 即梦图像生成API客户端
+ * 基于官方文档：https://www.volcengine.com/docs/85621/1616429
+ */
 export class JimengAPI {
   private client: AxiosInstance;
   private config: JimengConfig;
+  private auth: VolcengineAuth;
 
   constructor(config: JimengConfig) {
-    this.config = config;
+    this.config = {
+      ...config,
+      region: config.region || JIMENG_API_CONSTANTS.DEFAULT_REGION,
+      service: config.service || JIMENG_API_CONSTANTS.DEFAULT_SERVICE,
+      endpoint: config.endpoint || JIMENG_API_CONSTANTS.DEFAULT_ENDPOINT,
+    };
+
+    this.auth = new VolcengineAuth(this.config);
+
     this.client = axios.create({
-      baseURL: config.endpoint || 'https://api.jimeng.com',
+      baseURL: this.config.endpoint,
       timeout: 30000,
       headers: {
         'Content-Type': 'application/json',
-        'Authorization': `Bearer ${config.apiKey}`,
-        'X-Secret-Key': config.secretKey
-      }
+      },
     });
 
-    // 添加请求拦截器
-    this.client.interceptors.request.use(
-      (config) => {
-        console.log(`Making request to: ${config.method?.toUpperCase()} ${config.url}`);
-        return config;
-      },
-      (error) => {
-        console.error('Request error:', error);
-        return Promise.reject(error);
-      }
-    );
+    // 添加请求拦截器，自动添加签名
+    this.client.interceptors.request.use(async config => {
+      if (config.data) {
+        let signedRequest;
 
-    // 添加响应拦截器
+        // 根据请求类型选择签名方法
+        if (config.url === '/' && config.method === 'post') {
+          if (config.data.req_key === JIMENG_API_CONSTANTS.REQ_KEY) {
+            if (config.data.task_id) {
+              // 查询任务
+              signedRequest = this.auth.signTaskQueryRequest(config.data);
+            } else {
+              // 提交任务
+              signedRequest = this.auth.signImageGenerationRequest(config.data);
+            }
+          }
+        }
+
+        if (signedRequest) {
+          Object.assign(config.headers, signedRequest.headers);
+          config.url = signedRequest.url;
+        }
+      }
+
+      return config;
+    });
+
+    // 添加响应拦截器，统一错误处理
     this.client.interceptors.response.use(
-      (response) => {
-        console.log(`Response received: ${response.status}`);
-        return response;
-      },
-      (error) => {
-        console.error('Response error:', error.response?.data || error.message);
+      response => response,
+      error => {
+        if (error.response) {
+          const { status, data } = error.response;
+          console.error(`API请求失败: ${status}`, data);
+
+          // 根据错误码判断是否需要重试
+          if (status === 429 || status === 500) {
+            console.log('建议重试此请求');
+          }
+        }
         return Promise.reject(error);
       }
     );
   }
 
   /**
-   * 生成图像
+   * 生成图像（提交任务）
+   * @param request 图像生成请求参数
+   * @returns 任务提交响应
    */
-  async generateImage(request: ImageGenerationRequest): Promise<ImageGenerationResponse> {
+  async generateImage(
+    request: Partial<ImageGenerationRequest>
+  ): Promise<ImageGenerationResponse> {
     try {
-      const response = await this.client.post('/v1/images/generations', {
-        prompt: request.prompt,
-        negative_prompt: request.negative_prompt || '',
-        width: request.width || 1024,
-        height: request.height || 1024,
-        steps: request.steps || 20,
-        guidance_scale: request.guidance_scale || 7.5,
-        seed: request.seed || -1,
-        sampler: request.sampler || 'DPM++ 2M Karras',
-        model: request.model || 'jimeng-v1',
-        aspect_ratio: request.aspect_ratio || '1:1',
-        quality: request.quality || 'standard',
-        style: request.style || 'natural'
-      });
+      // 构建请求体，使用官方文档的格式
+      const payload: ImageGenerationRequest = {
+        req_key: JIMENG_API_CONSTANTS.REQ_KEY,
+        prompt: request.prompt || '',
+        use_pre_llm: request.use_pre_llm ?? true,
+        seed: request.seed ?? -1,
+      };
 
-      return {
-        success: true,
-        data: {
-          task_id: response.data.task_id,
-          status: response.data.status || 'pending'
+      // 如果指定了宽高，则添加到请求中
+      if (request.width && request.height) {
+        payload.width = request.width;
+        payload.height = request.height;
+      }
+
+      const response = await this.client.post('/', payload);
+      return response.data;
+    } catch (error: any) {
+      console.error('图像生成请求失败:', error.message);
+      throw new Error(`图像生成失败: ${error.message}`);
+    }
+  }
+
+  /**
+   * 查询任务状态和结果
+   * @param taskId 任务ID
+   * @param config 查询配置（如水印、返回URL等）
+   * @returns 任务查询响应
+   */
+  async queryTask(
+    taskId: string,
+    config?: TaskQueryConfig
+  ): Promise<TaskQueryResponse> {
+    try {
+      const payload: TaskQueryRequest = {
+        req_key: JIMENG_API_CONSTANTS.REQ_KEY,
+        task_id: taskId,
+      };
+
+      // 如果提供了配置，构建req_json
+      if (config) {
+        const reqJson: any = {};
+
+        if (config.return_url !== undefined) {
+          reqJson.return_url = config.return_url;
         }
-      };
-    } catch (error: any) {
-      return {
-        success: false,
-        error: error.response?.data?.error || error.message || 'Unknown error occurred'
-      };
-    }
-  }
 
-  /**
-   * 查询任务状态
-   */
-  async queryTask(request: TaskQueryRequest): Promise<TaskQueryResponse> {
-    try {
-      const response = await this.client.get(`/v1/tasks/${request.task_id}`);
-      
-      return {
-        success: true,
-        data: {
-          task_id: response.data.task_id,
-          status: response.data.status,
-          progress: response.data.progress,
-          images: response.data.images,
-          error: response.data.error,
-          created_at: response.data.created_at,
-          completed_at: response.data.completed_at
+        if (config.logo_info) {
+          reqJson.logo_info = config.logo_info;
         }
-      };
+
+        if (Object.keys(reqJson).length > 0) {
+          payload.req_json = JSON.stringify(reqJson);
+        }
+      }
+
+      const response = await this.client.post('/', payload);
+      return response.data;
     } catch (error: any) {
-      return {
-        success: false,
-        error: error.response?.data?.error || error.message || 'Unknown error occurred'
-      };
+      console.error('任务查询失败:', error.message);
+      throw new Error(`任务查询失败: ${error.message}`);
     }
   }
 
   /**
-   * 获取可用的模型列表
+   * 等待任务完成并返回结果
+   * @param taskId 任务ID
+   * @param config 查询配置
+   * @param maxWaitTime 最大等待时间（毫秒），默认5分钟
+   * @param pollInterval 轮询间隔（毫秒），默认2秒
+   * @returns 任务完成后的结果
    */
-  async getModels(): Promise<{ success: boolean; models?: string[]; error?: string }> {
-    try {
-      const response = await this.client.get('/v1/models');
-      return {
-        success: true,
-        models: response.data.models || []
-      };
-    } catch (error: any) {
-      return {
-        success: false,
-        error: error.response?.data?.error || error.message || 'Unknown error occurred'
-      };
+  async waitForTaskCompletion(
+    taskId: string,
+    config?: TaskQueryConfig,
+    maxWaitTime: number = 5 * 60 * 1000,
+    pollInterval: number = 2000
+  ): Promise<TaskQueryResponse> {
+    const startTime = Date.now();
+
+    while (Date.now() - startTime < maxWaitTime) {
+      try {
+        const response = await this.queryTask(taskId, config);
+
+        if (response.data.status === 'done') {
+          return response;
+        } else if (
+          response.data.status === 'not_found' ||
+          response.data.status === 'expired'
+        ) {
+          throw new Error(`任务状态异常: ${response.data.status}`);
+        }
+
+        // 等待指定间隔后再次查询
+        await new Promise(resolve => setTimeout(resolve, pollInterval));
+      } catch (error) {
+        console.error('轮询任务状态失败:', error);
+        throw error;
+      }
     }
+
+    throw new Error('任务等待超时');
   }
 
   /**
-   * 获取可用的采样器列表
+   * 生成图像并等待完成
+   * @param request 图像生成请求参数
+   * @param config 查询配置
+   * @param maxWaitTime 最大等待时间
+   * @returns 完整的图像生成结果
    */
-  async getSamplers(): Promise<{ success: boolean; samplers?: string[]; error?: string }> {
-    try {
-      const response = await this.client.get('/v1/samplers');
-      return {
-        success: true,
-        samplers: response.data.samplers || []
-      };
-    } catch (error: any) {
-      return {
-        success: false,
-        error: error.response?.data?.error || error.message || 'Unknown error occurred'
-      };
+  async generateImageAndWait(
+    request: Partial<ImageGenerationRequest>,
+    config?: TaskQueryConfig,
+    maxWaitTime: number = 5 * 60 * 1000
+  ): Promise<TaskQueryResponse> {
+    // 1. 提交任务
+    const submitResponse = await this.generateImage(request);
+    const taskId = submitResponse.data.task_id;
+
+    console.log(`任务已提交，任务ID: ${taskId}`);
+
+    // 2. 等待任务完成
+    return await this.waitForTaskCompletion(taskId, config, maxWaitTime);
+  }
+
+  /**
+   * 获取推荐尺寸配置
+   * @returns 推荐尺寸配置
+   */
+  getRecommendedSizes() {
+    return JIMENG_API_CONSTANTS.RECOMMENDED_SIZES;
+  }
+
+  /**
+   * 获取水印位置选项
+   * @returns 水印位置选项
+   */
+  getWatermarkPositions() {
+    return JIMENG_API_CONSTANTS.WATERMARK_POSITIONS;
+  }
+
+  /**
+   * 获取水印语言选项
+   * @returns 水印语言选项
+   */
+  getWatermarkLanguages() {
+    return JIMENG_API_CONSTANTS.WATERMARK_LANGUAGES;
+  }
+
+  /**
+   * 验证图像尺寸是否有效
+   * @param width 宽度
+   * @param height 高度
+   * @returns 是否有效
+   */
+  validateImageSize(width: number, height: number): boolean {
+    // 检查尺寸范围
+    if (width < 512 || width > 2048 || height < 512 || height > 2048) {
+      return false;
     }
+
+    // 检查宽高比
+    const ratio = width / height;
+    if (ratio < 1 / 3 || ratio > 3) {
+      return false;
+    }
+
+    return true;
+  }
+
+  /**
+   * 验证提示词长度
+   * @param prompt 提示词
+   * @returns 是否有效
+   */
+  validatePrompt(prompt: string): boolean {
+    return prompt.length > 0 && prompt.length <= 800;
   }
 }
