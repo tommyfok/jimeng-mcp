@@ -1,11 +1,11 @@
 {
   "name": "jimeng-image-mcp",
-  "version": "0.1.0",
+  "version": "0.2.0",
   "description": "MCP service for Jimeng Image Generation API",
   "type": "module",
   "main": "dist/index.js",
   "bin": {
-    "jimeng-mcp": "dist/cli.js"
+    "jimeng-image-mcp": "dist/cli.js"
   },
   "scripts": {
     "build": "tsc",

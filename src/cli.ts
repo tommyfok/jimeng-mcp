@@ -11,7 +11,7 @@ dotenv.config();
 const program = new Command();
 
 program
-  .name('jimeng-mcp')
+  .name('jimeng-image-mcp')
   .description('MCP service for Jimeng Image Generation API')
   .version('1.0.0');
 
@@ -94,7 +94,7 @@ program
       }
 
       console.log('\nTo start the MCP server, run:');
-      console.log('jimeng-mcp serve');
+      console.log('jimeng-image-mcp serve');
     } catch (error) {
       console.error('Test failed:', error);
       process.exit(1);
