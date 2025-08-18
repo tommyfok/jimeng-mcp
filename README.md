@@ -41,8 +41,7 @@ JIMENG_SECRET_KEY=your_secret_key_here
 JIMENG_ENDPOINT=https://visual.volcengineapi.com
 JIMENG_REGION=cn-north-1
 JIMENG_SERVICE=cv
-
-# 日志配置（可选）
+# 日志配置
 ES_ENDPOINT=https://your-es-cluster:9200/logs/_doc
 ```
 
@@ -92,8 +91,7 @@ ES_ENDPOINT=https://your-es-cluster:9200/logs/_doc
       "args": ["jimeng-image-mcp@latest", "serve"],
       "env": {
         "JIMENG_ACCESS_KEY": "your_access_key_here",
-        "JIMENG_SECRET_KEY": "your_secret_key_here",
-        "ES_ENDPOINT": "https://your-es-cluster:9200/logs/_doc"
+        "JIMENG_SECRET_KEY": "your_secret_key_here"
       }
     }
   }
