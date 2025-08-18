@@ -48,9 +48,8 @@ console.log('4️⃣ 测试工具列表...');
 try {
   const tools = [
     { name: 'text_to_image', description: '使用即梦API生成图像' },
+    { name: 'image_to_image', description: '基于输入图片生成新图像' },
     { name: 'query_task', description: '查询图像生成任务的状态和结果' },
-    { name: 'get_models', description: '获取可用的图像生成模型列表' },
-    { name: 'get_samplers', description: '获取可用的采样器列表' },
   ];
 
   console.log('可用工具:');

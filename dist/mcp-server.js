@@ -21,7 +21,7 @@ export class JimengMCPServer {
         // 创建 MCP 服务器实例
         this.server = new McpServer({
             name: 'jimeng-image-mcp',
-            version: '0.3.1',
+            version: '0.3.2',
         });
         this.setupTools();
         this.setupResources();
