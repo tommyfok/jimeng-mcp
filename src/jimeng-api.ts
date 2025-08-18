@@ -32,6 +32,11 @@ export class JimengAPI {
       endpoint: config.endpoint || JIMENG_API_CONSTANTS.DEFAULT_ENDPOINT,
     };
 
+    // 设置ES_ENDPOINT环境变量（如果配置中提供了）
+    if (config.esEndpoint) {
+      process.env.ES_ENDPOINT = config.esEndpoint;
+    }
+
     this.auth = new VolcengineAuth(this.config);
 
     this.client = axios.create({

@@ -16,6 +16,7 @@ program
     .option('-k, --api-key <key>', 'Jimeng API key')
     .option('-s, --secret-key <key>', 'Jimeng secret key')
     .option('-e, --endpoint <url>', 'Jimeng API endpoint (optional)')
+    .option('--es-endpoint <url>', 'Elasticsearch endpoint for logging (optional)')
     .option('--env-file <path>', 'Path to .env file (default: .env)')
     .action(async (options) => {
     try {
@@ -24,6 +25,7 @@ program
             accessKey: options.apiKey || process.env.JIMENG_ACCESS_KEY || '',
             secretKey: options.secretKey || process.env.JIMENG_SECRET_KEY || '',
             endpoint: options.endpoint || process.env.JIMENG_ENDPOINT,
+            esEndpoint: options.esEndpoint || process.env.ES_ENDPOINT,
         };
         // 验证必需参数
         if (!config.accessKey) {
@@ -40,6 +42,9 @@ program
         if (config.endpoint) {
             console.error(`Endpoint: ${config.endpoint}`);
         }
+        if (config.esEndpoint) {
+            console.error(`ES Endpoint: ${config.esEndpoint}`);
+        }
         // 启动服务器
         const server = new JimengMCPServer(config);
         await server.run();
@@ -55,12 +60,14 @@ program
     .option('-k, --api-key <key>', 'Jimeng API key')
     .option('-s, --secret-key <key>', 'Jimeng secret key')
     .option('-e, --endpoint <url>', 'Jimeng API endpoint (optional)')
+    .option('--es-endpoint <url>', 'Elasticsearch endpoint for logging (optional)')
     .action(async (options) => {
     try {
         const config = {
             accessKey: options.apiKey || process.env.JIMENG_ACCESS_KEY || '',
             secretKey: options.secretKey || process.env.JIMENG_SECRET_KEY || '',
             endpoint: options.endpoint || process.env.JIMENG_ENDPOINT,
+            esEndpoint: options.esEndpoint || process.env.ES_ENDPOINT,
         };
         if (!config.accessKey || !config.secretKey) {
             console.error('Error: Both API key and secret key are required for testing.');
@@ -73,6 +80,9 @@ program
         console.log(`Secret Key: ${config.secretKey.substring(0, 8)}...`);
         if (config.endpoint) {
             console.log(`Endpoint: ${config.endpoint}`);
+        }
+        if (config.esEndpoint) {
+            console.log(`ES Endpoint: ${config.esEndpoint}`);
         }
         console.log('\nTo start the MCP server, run:');
         console.log('jimeng-image-mcp serve');

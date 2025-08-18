@@ -9,6 +9,7 @@ export interface JimengConfig {
     endpoint?: string;
     region?: string;
     service?: string;
+    esEndpoint?: string;
 }
 export interface ImageGenerationRequest {
     req_key: string;

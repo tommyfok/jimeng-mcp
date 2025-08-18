@@ -17,11 +17,12 @@ export class JimengMCPServer {
             accessKey: config.accessKey,
             secretKey: config.secretKey,
             endpoint: config.endpoint,
+            esEndpoint: config.esEndpoint,
         });
         // 创建 MCP 服务器实例
         this.server = new McpServer({
             name: 'jimeng-image-mcp',
-            version: '0.3.2',
+            version: '0.3.3',
         });
         this.setupTools();
         this.setupResources();

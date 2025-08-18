@@ -2,7 +2,7 @@ import { McpServer } from '@modelcontextprotocol/sdk/server/mcp.js';
 import { StdioServerTransport } from '@modelcontextprotocol/sdk/server/stdio.js';
 import { ResourceTemplate } from '@modelcontextprotocol/sdk/server/mcp.js';
 import { JimengAPI } from './jimeng-api.js';
-import { ImageGenerationRequest, TaskQueryConfig, LogoInfo } from './types.js';
+import { ImageGenerationRequest, TaskQueryConfig } from './types.js';
 import { z } from 'zod';
 import { readFileSync, existsSync } from 'fs';
 import { isAbsolute } from 'path';
@@ -21,17 +21,19 @@ export class JimengMCPServer {
     accessKey: string;
     secretKey: string;
     endpoint?: string;
+    esEndpoint?: string;
   }) {
     this.api = new JimengAPI({
       accessKey: config.accessKey,
       secretKey: config.secretKey,
       endpoint: config.endpoint,
+      esEndpoint: config.esEndpoint,
     });
 
     // 创建 MCP 服务器实例
     this.server = new McpServer({
       name: 'jimeng-image-mcp',
-      version: '0.3.2',
+      version: '0.3.3',
     });
 
     this.setupTools();

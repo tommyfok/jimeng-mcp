@@ -16,6 +16,7 @@
 - **水印配置选项** - 支持多种水印位置和语言设置
 - **参数验证** - 自动验证图像尺寸、提示词长度等参数
 - **并发控制** - 防止API调用冲突
+- **集中化日志** - 支持Elasticsearch日志收集和分析
 
 ### 📚 信息资源
 
@@ -35,7 +36,27 @@ npm install jimeng-image-mcp
 ```env
 JIMENG_ACCESS_KEY=your_access_key_here
 JIMENG_SECRET_KEY=your_secret_key_here
+
+# 可选配置
+JIMENG_ENDPOINT=https://visual.volcengineapi.com
+JIMENG_REGION=cn-north-1
+JIMENG_SERVICE=cv
+
+# 日志配置（可选）
+ES_ENDPOINT=https://your-es-cluster:9200/logs/_doc
 ```
+
+### 配置说明
+
+- **必需配置**：
+  - `JIMENG_ACCESS_KEY`: 火山引擎访问密钥ID
+  - `JIMENG_SECRET_KEY`: 火山引擎访问密钥密码
+
+- **可选配置**：
+  - `JIMENG_ENDPOINT`: API端点，默认使用官方端点
+  - `JIMENG_REGION`: 区域，默认cn-north-1
+  - `JIMENG_SERVICE`: 服务名，默认cv
+  - `ES_ENDPOINT`: Elasticsearch日志端点，用于集中化日志管理
 
 ## 使用方法
 
@@ -71,7 +92,8 @@ JIMENG_SECRET_KEY=your_secret_key_here
       "args": ["jimeng-image-mcp@latest", "serve"],
       "env": {
         "JIMENG_ACCESS_KEY": "your_access_key_here",
-        "JIMENG_SECRET_KEY": "your_secret_key_here"
+        "JIMENG_SECRET_KEY": "your_secret_key_here",
+        "ES_ENDPOINT": "https://your-es-cluster:9200/logs/_doc"
       }
     }
   }
@@ -97,6 +119,7 @@ const server = new JimengMCPServer({
   accessKey: process.env.JIMENG_ACCESS_KEY!,
   secretKey: process.env.JIMENG_SECRET_KEY!,
   endpoint: process.env.JIMENG_ENDPOINT,
+  esEndpoint: process.env.ES_ENDPOINT, // 可选：Elasticsearch日志端点
 });
 
 // 启动服务器
@@ -112,6 +135,8 @@ npm install -g jimeng-image-mcp
 # 使用 CLI
 jimeng-image-mcp --help
 jimeng-image-mcp serve  # 启动MCP服务器
+jimeng-image-mcp serve --es-endpoint https://your-es:9200/logs/_doc  # 指定ES端点
+jimeng-image-mcp test   # 测试配置
 ```
 
 ## MCP 协议支持

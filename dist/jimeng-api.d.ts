@@ -54,11 +54,7 @@ export declare class JimengAPI {
             };
             readonly '21:9': {
                 readonly width: 2016;
-                readonly height: 864; /**
-                 * 图生图3.0智能参考（提交任务）
-                 * @param request 图生图请求参数
-                 * @returns 任务提交响应
-                 */
+                readonly height: 864;
             };
         };
         readonly HD_2K: {

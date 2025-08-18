@@ -10,6 +10,7 @@ export interface JimengConfig {
   endpoint?: string;
   region?: string;
   service?: string;
+  esEndpoint?: string; // Elasticsearch日志端点
 }
 
 // 文生图请求参数

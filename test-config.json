@@ -4,6 +4,7 @@
   "endpoint": "https://visual.volcengineapi.com",
   "region": "cn-north-1",
   "service": "cv",
+  "esEndpoint": "https://test-es-cluster:9200/logs/_doc",
   "testScenarios": {
     "generateImage": {
       "valid": {

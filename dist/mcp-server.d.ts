@@ -10,6 +10,7 @@ export declare class JimengMCPServer {
         accessKey: string;
         secretKey: string;
         endpoint?: string;
+        esEndpoint?: string;
     });
     /**
      * 检查是否为本地文件路径

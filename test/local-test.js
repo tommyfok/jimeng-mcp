@@ -21,6 +21,11 @@ console.log(`Secret Key: ${config.secretKey.substring(0, 8)}...`);
 console.log(`Endpoint: ${config.endpoint}`);
 console.log(`Region: ${config.region}`);
 console.log(`Service: ${config.service}`);
+if (config.esEndpoint) {
+  console.log(`ES Endpoint: ${config.esEndpoint}`);
+} else {
+  console.log('ES Endpoint: 未设置（将使用控制台日志）');
+}
 console.log('✅ 配置验证通过\n');
 
 // 测试2: API客户端初始化

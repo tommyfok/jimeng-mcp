@@ -140,7 +140,8 @@ async function testRealImageToImage() {
 
   try {
     // 第一步：先生成一张图片用于图生图测试
-    console.log('   步骤1: 生成一张测试图片...');
+    console.log('   步骤1: 等待3秒，生成一张测试图片...');
+    await new Promise(resolve => setTimeout(resolve, 3000));
     const generationResult = await jimengAPI.generateImage({
       prompt:
         'a beautiful landscape with mountains and lake, photorealistic style, high quality',
