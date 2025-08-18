@@ -68,7 +68,7 @@ JIMENG_SECRET_KEY=your_secret_key_here
   "mcpServers": {
     "jimeng": {
       "command": "npx",
-      "args": ["jimeng-image-mcp", "serve"],
+      "args": ["jimeng-image-mcp@latest", "serve"],
       "env": {
         "JIMENG_ACCESS_KEY": "your_access_key_here",
         "JIMENG_SECRET_KEY": "your_secret_key_here"
