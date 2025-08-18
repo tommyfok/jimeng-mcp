@@ -6,8 +6,8 @@
 
 ### 🎨 图像生成工具
 
-- **`generate_image`** - 提交图像生成任务
-- **`generate_image_and_wait`** - 生成图像并等待完成
+- **`text_to_image`** - 提交图像生成任务
+- **`image_to_image`** - 提交图生图任务（支持绝对路径、文件协议和远程URL，不支持相对路径）
 - **`query_task`** - 查询任务状态和结果
 
 ### 🔧 辅助工具
@@ -38,6 +38,26 @@ JIMENG_SECRET_KEY=your_secret_key_here
 ```
 
 ## 使用方法
+
+### 🖼️ 本地文件支持
+
+图生图工具现在支持多种图片输入方式：
+
+**本地文件路径：**
+
+- 相对路径：`./image.jpg`, `../images/photo.png`
+- 绝对路径：`/Users/username/Pictures/image.jpg`
+- 文件协议：`file:///path/to/image.jpg`
+
+**远程URL：**
+
+- HTTP/HTTPS链接：`https://example.com/image.jpg`
+
+**自动处理：**
+
+- 本地文件会自动读取并转换为base64编码
+- 远程URL会直接传递给API
+- 支持混合输入（同时使用本地文件和远程URL）
 
 ### 在 Cursor 中配置
 
@@ -114,12 +134,26 @@ jimeng-image-mcp --help
 ```typescript
 // 生成图像
 const result = await client.callTool({
-  name: 'generate_image',
+  name: 'text_to_image',
   arguments: {
     prompt: '一只可爱的小猫',
     width: 1024,
     height: 1024,
     use_pre_llm: true,
+  },
+});
+
+// 图生图（支持绝对路径、文件协议和远程URL，不支持相对路径）
+const i2iResult = await client.callTool({
+  name: 'image_to_image',
+  arguments: {
+    prompt: '将小猫变成小狗',
+    image_urls: [
+      '/path/to/local-cat.jpg', // 绝对路径
+      'file:///path/to/another-cat.png', // 文件协议
+      'https://example.com/cat.jpg', // 远程URL
+    ],
+    scale: 0.8,
   },
 });
 

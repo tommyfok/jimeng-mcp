@@ -114,6 +114,13 @@ export class VolcengineAuth {
         return this.signRequest('POST', '/', {}, bodyString, JIMENG_API_CONSTANTS.ACTION_SUBMIT, JIMENG_API_CONSTANTS.VERSION);
     }
     /**
+     * 生成图生图请求的签名（提交任务）
+     */
+    signImageToImageRequest(body) {
+        const bodyString = JSON.stringify(body);
+        return this.signRequest('POST', '/', {}, bodyString, JIMENG_API_CONSTANTS.ACTION_SUBMIT, JIMENG_API_CONSTANTS.VERSION);
+    }
+    /**
      * 生成任务查询请求的签名
      */
     signTaskQueryRequest(body) {

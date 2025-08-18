@@ -56,3 +56,4 @@ jspm_packages/
 
 # custom
 PUBLISH_CHECKLIST.md
+.output

@@ -1,5 +1,6 @@
 import { JimengMCPServer } from './mcp-server.js';
 import dotenv from 'dotenv';
+import { quickLogError } from './utils.js';
 // 加载环境变量
 dotenv.config();
 async function main() {
@@ -30,7 +31,7 @@ async function main() {
         await server.run();
     }
     catch (error) {
-        console.error('Failed to start server:', error);
+        quickLogError({ error, msg: 'Fail to start server' });
         process.exit(1);
     }
 }

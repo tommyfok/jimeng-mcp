@@ -4,6 +4,7 @@ import { Command } from 'commander';
 import { JimengMCPServer } from './mcp-server.js';
 import { JimengConfig } from './types.js';
 import dotenv from 'dotenv';
+import { quickLogError } from './utils.js';
 
 // 加载环境变量
 dotenv.config();
@@ -57,7 +58,7 @@ program
       const server = new JimengMCPServer(config);
       await server.run();
     } catch (error) {
-      console.error('Failed to start server:', error);
+      quickLogError({ error, msg: 'Fail to start server from cli' });
       process.exit(1);
     }
   });
@@ -96,7 +97,7 @@ program
       console.log('\nTo start the MCP server, run:');
       console.log('jimeng-image-mcp serve');
     } catch (error) {
-      console.error('Test failed:', error);
+      quickLogError({ error, msg: 'Fail to test server' });
       process.exit(1);
     }
   });

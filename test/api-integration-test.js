@@ -116,9 +116,13 @@ async function runIntegrationTests() {
         console.log('   等待3秒后查询任务状态...');
         await new Promise(resolve => setTimeout(resolve, 3000));
 
-        const queryResult = await api.queryTask(generationResult.data.task_id, {
-          return_url: true,
-        });
+        const queryResult = await api.queryTask(
+          generationResult.data.task_id,
+          'jimeng_t2i_v30',
+          {
+            return_url: true,
+          }
+        );
 
         console.log('✅ 任务状态查询成功');
         console.log('   当前状态:', queryResult.data?.status);

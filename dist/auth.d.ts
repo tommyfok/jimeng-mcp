@@ -43,6 +43,13 @@ export declare class VolcengineAuth {
         url: string;
     };
     /**
+     * 生成图生图请求的签名（提交任务）
+     */
+    signImageToImageRequest(body: any): {
+        headers: Record<string, string>;
+        url: string;
+    };
+    /**
      * 生成任务查询请求的签名
      */
     signTaskQueryRequest(body: any): {

@@ -6,20 +6,39 @@ export declare class JimengMCPServer {
     private server;
     private api;
     private isProcessing;
-    private processingQueue;
     constructor(config: {
         accessKey: string;
         secretKey: string;
         endpoint?: string;
     });
     /**
-     * 并发控制包装器 - 确保同时只有一个图像生成相关的API调用
+     * 检查是否为本地文件路径
+     * @param path 文件路径
+     * @returns 是否为本地文件路径
+     */
+    private isLocalFilePath;
+    /**
+     * 读取本地文件并转换为base64
+     * @param filePath 文件路径
+     * @returns base64编码的字符串
+     */
+    private readLocalFileAsBase64;
+    /**
+     * 验证图片输入格式
+     * @param imageUrls 图片URL数组
+     * @returns 验证结果
+     */
+    private validateImageInputs;
+    /**
+     * 处理图片输入，支持绝对路径、文件协议和远程URL，不支持相对路径
+     * @param imageUrls 图片URL数组
+     * @returns 处理后的请求对象
+     */
+    private processImageInput;
+    /**
+     * 简单的并发控制 - 确保同时只有一个图像生成相关的API调用
      */
     private withConcurrencyControl;
-    /**
-     * 检查是否为图像生成相关的操作
-     */
-    private isImageGenerationOperation;
     private setupTools;
     private setupResources;
     run(): Promise<void>;

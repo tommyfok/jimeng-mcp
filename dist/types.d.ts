@@ -1,6 +1,7 @@
 /**
  * 即梦图像生成API类型定义
- * 基于官方文档：https://www.volcengine.com/docs/85621/1616429
+ * 基于官方文档：https://www.volcengine.com/docs/85621/1616429 (文生图)
+ * 和 https://www.volcengine.com/docs/85621/1747301 (图生图3.0智能参考)
  */
 export interface JimengConfig {
     accessKey: string;
@@ -17,7 +18,27 @@ export interface ImageGenerationRequest {
     width?: number;
     height?: number;
 }
+export interface ImageToImageRequest {
+    req_key: string;
+    prompt: string;
+    binary_data_base64?: string[];
+    image_urls?: string[];
+    seed?: number;
+    scale?: number;
+    width?: number;
+    height?: number;
+}
 export interface ImageGenerationResponse {
+    code: string;
+    data: {
+        task_id: string;
+    };
+    message: string;
+    request_id: string;
+    status: string;
+    time_elapsed: string;
+}
+export interface ImageToImageResponse {
     code: string;
     data: {
         task_id: string;
@@ -63,7 +84,8 @@ export interface JimengError {
     是否需要重试: string;
 }
 export declare const JIMENG_API_CONSTANTS: {
-    readonly REQ_KEY: "jimeng_t2i_v30";
+    readonly REQ_KEY_T2I: "jimeng_t2i_v30";
+    readonly REQ_KEY_I2I: "jimeng_i2i_v30";
     readonly ACTION_SUBMIT: "CVSync2AsyncSubmitTask";
     readonly ACTION_QUERY: "CVSync2AsyncGetResult";
     readonly VERSION: "2022-08-31";
@@ -116,6 +138,28 @@ export declare const JIMENG_API_CONSTANTS: {
             };
         };
     };
+    readonly I2I_RECOMMENDED_SIZES: {
+        readonly '1:1': {
+            readonly width: 1328;
+            readonly height: 1328;
+        };
+        readonly '4:3': {
+            readonly width: 1472;
+            readonly height: 1104;
+        };
+        readonly '3:2': {
+            readonly width: 1584;
+            readonly height: 1056;
+        };
+        readonly '16:9': {
+            readonly width: 1664;
+            readonly height: 936;
+        };
+        readonly '21:9': {
+            readonly width: 2016;
+            readonly height: 864;
+        };
+    };
     readonly WATERMARK_POSITIONS: {
         readonly BOTTOM_RIGHT: 0;
         readonly BOTTOM_LEFT: 1;
@@ -125,6 +169,17 @@ export declare const JIMENG_API_CONSTANTS: {
     readonly WATERMARK_LANGUAGES: {
         readonly CHINESE: 0;
         readonly ENGLISH: 1;
+    };
+    readonly SCALE_RANGE: {
+        readonly MIN: 0;
+        readonly MAX: 1;
+        readonly DEFAULT: 0.5;
+    };
+    readonly IMAGE_LIMITS: {
+        readonly MAX_SIZE_MB: 4.7;
+        readonly MAX_RESOLUTION: 4096;
+        readonly MAX_ASPECT_RATIO: 3;
+        readonly SUPPORTED_FORMATS: readonly ["JPEG", "PNG"];
     };
 };
 //# sourceMappingURL=types.d.ts.map
