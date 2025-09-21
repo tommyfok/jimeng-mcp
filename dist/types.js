@@ -6,8 +6,9 @@
 // API常量
 export const JIMENG_API_CONSTANTS = {
     // 固定值
-    REQ_KEY_T2I: 'jimeng_t2i_v30', // 文生图
-    REQ_KEY_I2I: 'jimeng_i2i_v30', // 图生图3.0智能参考
+    // 4.0版本已统一使用jimeng_t2i_v40
+    REQ_KEY_T2I: 'jimeng_t2i_v40',
+    REQ_KEY_I2I: 'jimeng_t2i_v40',
     ACTION_SUBMIT: 'CVSync2AsyncSubmitTask',
     ACTION_QUERY: 'CVSync2AsyncGetResult',
     VERSION: '2022-08-31',
