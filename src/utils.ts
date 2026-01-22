@@ -10,13 +10,13 @@ export async function logToElasticsearch(data: any) {
         type: 'jimeng-image-mcp',
       }),
     }).catch(e => {
-      console.log('fail to log to elasticsearch', {
+      console.error('fail to log to elasticsearch', {
         logError: e,
         dataToLog,
       });
     });
   } else {
-    console.log(
+    console.error(
       'process.env.ES_ENDPOINT not set, skip logging to elasticsearch',
       dataToLog
     );
@@ -30,7 +30,7 @@ export async function quickLogError(error: unknown) {
       stack: error.stack,
     });
   } else {
-    console.log(error);
+    console.error(error);
     logToElasticsearch(error);
   }
 }

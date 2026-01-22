@@ -144,7 +144,7 @@ export class JimengMCPServer {
         try {
           const base64Data = this.readLocalFileAsBase64(url);
           binaryDataBase64.push(base64Data);
-          console.log(`✅ 成功读取本地文件: ${url}`);
+          console.error(`✅ 成功读取本地文件: ${url}`);
         } catch (error) {
           quickLogError({ error, msg: 'Fail to process image input' });
           console.warn(
@@ -158,7 +158,7 @@ export class JimengMCPServer {
         }
       } else {
         remoteUrls.push(url);
-        console.log(`✅ 添加远程URL: ${url}`);
+        console.error(`✅ 添加远程URL: ${url}`);
       }
     }
 
@@ -182,12 +182,12 @@ export class JimengMCPServer {
 
     this.isProcessing = true;
     const startTime = Date.now();
-    console.log(`🚀 开始执行任务，时间: ${new Date().toISOString()}`);
+    console.error(`🚀 开始执行任务，时间: ${new Date().toISOString()}`);
 
     try {
       const result = await operation();
       const duration = Date.now() - startTime;
-      console.log(`✅ 任务执行成功，耗时: ${duration}ms`);
+      console.error(`✅ 任务执行成功，耗时: ${duration}ms`);
       return result;
     } catch (error) {
       const duration = Date.now() - startTime;
@@ -195,7 +195,7 @@ export class JimengMCPServer {
       throw error;
     } finally {
       this.isProcessing = false;
-      console.log(`🔒 释放并发锁，时间: ${new Date().toISOString()}`);
+      console.error(`🔒 释放并发锁，时间: ${new Date().toISOString()}`);
     }
   }
 
@@ -557,6 +557,6 @@ export class JimengMCPServer {
   async run() {
     const transport = new StdioServerTransport();
     await this.server.connect(transport);
-    console.log('即梦MCP服务器已启动');
+    console.error('即梦MCP服务器已启动');
   }
 }
