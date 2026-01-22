@@ -203,6 +203,31 @@ export class JimengMCPServer {
             },
         }, async ({ prompt, image_urls, size, width, height, scale, force_single, min_ratio, max_ratio, seed, }) => {
             return await this.withConcurrencyControl(async () => {
+                // 参数验证与默认值处理
+                // 如果没有提供任何尺寸参数，默认使用 1024x1024
+                if (size === undefined && width === undefined && height === undefined) {
+                    width = 1024;
+                    height = 1024;
+                }
+                else if (size === undefined) {
+                    // 如果没有提供 size，检查 width 和 height
+                    if (width !== undefined && height === undefined) {
+                        throw new Error('提供 width 时必须同时提供 height');
+                    }
+                    if (width === undefined && height !== undefined) {
+                        throw new Error('提供 height 时必须同时提供 width');
+                    }
+                    // 如果都提供了，验证面积范围
+                    if (width !== undefined && height !== undefined) {
+                        const area = width * height;
+                        const minArea = 1024 * 1024;
+                        const maxArea = 4096 * 4096;
+                        if (area < minArea || area > maxArea) {
+                            throw new Error(`图片面积 (width * height) 必须在 1024*1024 到 4096*4096 之间，` +
+                                `当前为 ${width}*${height}=${area}`);
+                        }
+                    }
+                }
                 const request = {
                     prompt,
                     size,
