@@ -6,6 +6,8 @@ export declare class JimengMCPServer {
     private server;
     private api;
     private isProcessing;
+    private lastRequestTime;
+    private readonly REQUEST_COOLDOWN;
     constructor(config: {
         accessKey: string;
         secretKey: string;

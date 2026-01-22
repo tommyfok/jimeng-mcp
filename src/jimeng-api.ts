@@ -93,7 +93,7 @@ export class JimengAPI {
 
           // 根据错误码判断是否需要重试
           if (status === 429 || status === 500) {
-            console.log('建议重试此请求');
+            console.error('建议重试此请求');
           }
         }
         return Promise.reject(error);

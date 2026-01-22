@@ -14,6 +14,8 @@ import { quickLogError } from './utils.js';
 export class JimengMCPServer {
     constructor(config) {
         this.isProcessing = false; // 并发控制标志
+        this.lastRequestTime = 0; // 上次请求时间
+        this.REQUEST_COOLDOWN = 2000; // 请求冷却时间（毫秒）
         this.api = new JimengAPI({
             accessKey: config.accessKey,
             secretKey: config.secretKey,
@@ -136,6 +138,14 @@ export class JimengMCPServer {
      * 简单的并发控制 - 确保同时只有一个图像生成相关的API调用
      */
     async withConcurrencyControl(operation) {
+        // 检查冷却时间
+        const now = Date.now();
+        const timeSinceLastRequest = now - this.lastRequestTime;
+        if (timeSinceLastRequest < this.REQUEST_COOLDOWN) {
+            const waitTime = this.REQUEST_COOLDOWN - timeSinceLastRequest;
+            console.error(`⏳ 触发冷却限制，等待 ${waitTime}ms...`);
+            await new Promise(resolve => setTimeout(resolve, waitTime));
+        }
         if (this.isProcessing) {
             const error = new Error('另一个图像生成任务正在进行中，请稍后再试');
             console.warn(`⚠️  并发控制: ${error.message}`);
@@ -156,6 +166,11 @@ export class JimengMCPServer {
             throw error;
         }
         finally {
+            // 记录本次请求结束时间，作为冷却起始点
+            this.lastRequestTime = Date.now();
+            // 强制等待一段冷却时间后再释放锁，确保不会立即发起下一个请求
+            console.error(`⏳ 执行强制冷却 ${this.REQUEST_COOLDOWN}ms...`);
+            await new Promise(resolve => setTimeout(resolve, this.REQUEST_COOLDOWN));
             this.isProcessing = false;
             console.error(`🔒 释放并发锁，时间: ${new Date().toISOString()}`);
         }
