@@ -1,6 +1,6 @@
 /**
  * 即梦图像生成API类型定义
- * 基于官方文档：https://www.volcengine.com/docs/85621/1616429 (文生图)
+ * 基于官方文档：https://www.volcengine.com/docs/85621/1817045 (文生图)
  * 和 https://www.volcengine.com/docs/85621/1747301 (图生图3.0智能参考)
  */
 export interface JimengConfig {
@@ -86,7 +86,7 @@ export interface JimengError {
 }
 export declare const JIMENG_API_CONSTANTS: {
     readonly REQ_KEY_T2I: "jimeng_t2i_v40";
-    readonly REQ_KEY_I2I: "jimeng_t2i_v40";
+    readonly REQ_KEY_I2I: "jimeng_i2i_v40";
     readonly ACTION_SUBMIT: "CVSync2AsyncSubmitTask";
     readonly ACTION_QUERY: "CVSync2AsyncGetResult";
     readonly VERSION: "2022-08-31";

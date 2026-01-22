@@ -3,7 +3,7 @@
 /**
  * 即梦API集成测试脚本
  * 测试真实的API调用（需要有效的API密钥）
- * 基于官方文档：https://www.volcengine.com/docs/85621/1616429
+ * 基于官方文档：https://www.volcengine.com/docs/85621/1817045
  */
 
 import { JimengAPI } from '../dist/jimeng-api.js';

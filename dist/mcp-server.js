@@ -2,13 +2,14 @@ import { McpServer } from '@modelcontextprotocol/sdk/server/mcp.js';
 import { StdioServerTransport } from '@modelcontextprotocol/sdk/server/stdio.js';
 import { ResourceTemplate } from '@modelcontextprotocol/sdk/server/mcp.js';
 import { JimengAPI } from './jimeng-api.js';
+import { JIMENG_API_CONSTANTS, } from './types.js';
 import { z } from 'zod';
 import { readFileSync, existsSync } from 'fs';
 import { isAbsolute } from 'path';
 import { quickLogError } from './utils.js';
 /**
  * 即梦MCP服务器
- * 基于官方文档：https://www.volcengine.com/docs/85621/1616429
+ * 基于官方文档：https://www.volcengine.com/docs/85621/1817045
  */
 export class JimengMCPServer {
     constructor(config) {
@@ -270,6 +271,10 @@ export class JimengMCPServer {
             description: '查询任务状态和结果',
             inputSchema: {
                 task_id: z.string().describe('任务ID'),
+                req_key: z
+                    .string()
+                    .optional()
+                    .describe('服务标识，可选值：jimeng_t2i_v40（文生图）或 jimeng_i2i_v40（图生图）。如果不提供，默认使用 jimeng_t2i_v40'),
                 return_url: z.boolean().optional().describe('是否返回URL'),
                 logo_info: z
                     .object({
@@ -279,7 +284,7 @@ export class JimengMCPServer {
                     .optional()
                     .describe('水印信息'),
             },
-        }, async ({ task_id, return_url, logo_info }) => {
+        }, async ({ task_id, req_key, return_url, logo_info }) => {
             const config = {};
             if (return_url !== undefined) {
                 config.return_url = return_url;
@@ -294,7 +299,9 @@ export class JimengMCPServer {
                         : undefined,
                 };
             }
-            const response = await this.api.queryTask(task_id, undefined, config);
+            // 使用提供的 req_key，如果没有提供则使用默认值（文生图）
+            const reqKey = req_key || JIMENG_API_CONSTANTS.REQ_KEY_T2I;
+            const response = await this.api.queryTask(task_id, reqKey, config);
             let statusText = '';
             switch (response.data.status) {
                 case 'in_queue':
@@ -410,7 +417,9 @@ export class JimengMCPServer {
             description: '查询特定任务的状态信息',
         }, async (uri, { taskId }) => {
             try {
-                const response = await this.api.queryTask(Array.isArray(taskId) ? taskId.join(',') : taskId);
+                // 资源查询使用默认的 reqKey（文生图）
+                // 如果是图生图任务，需要通过工具查询并指定 req_key
+                const response = await this.api.queryTask(Array.isArray(taskId) ? taskId.join(',') : taskId, JIMENG_API_CONSTANTS.REQ_KEY_T2I);
                 const statusInfo = {
                     task_id: taskId,
                     status: response.data.status,

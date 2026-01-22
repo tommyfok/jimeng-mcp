@@ -16,7 +16,7 @@ import { quickLogError } from './utils.js';
 /**
  * 即梦图像生成API客户端
  * 基于官方文档：
- * - 文生图：https://www.volcengine.com/docs/85621/1616429
+ * - 文生图：https://www.volcengine.com/docs/85621/1817045
  * - 图生图3.0智能参考：https://www.volcengine.com/docs/85621/1747301
  */
 export class JimengAPI {

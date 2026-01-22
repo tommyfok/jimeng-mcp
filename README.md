@@ -269,4 +269,4 @@ MIT License
 
 - [Model Context Protocol](https://modelcontextprotocol.io/)
 - [MCP TypeScript SDK](https://github.com/modelcontextprotocol/typescript-sdk)
-- [即梦 API 文档](https://www.volcengine.com/docs/85621/1616429)
+- [即梦 API 文档](https://www.volcengine.com/docs/85621/1817045)

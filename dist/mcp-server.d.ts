@@ -1,6 +1,6 @@
 /**
  * 即梦MCP服务器
- * 基于官方文档：https://www.volcengine.com/docs/85621/1616429
+ * 基于官方文档：https://www.volcengine.com/docs/85621/1817045
  */
 export declare class JimengMCPServer {
     private server;
