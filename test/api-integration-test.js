@@ -12,6 +12,9 @@ import dotenv from 'dotenv';
 // 加载环境变量
 dotenv.config();
 
+console.log('DEBUG: JIMENG_ACCESS_KEY is', process.env.JIMENG_ACCESS_KEY ? 'SET' : 'NOT SET');
+console.log('DEBUG: JIMENG_ACCESS_KEY value starts with', process.env.JIMENG_ACCESS_KEY ? process.env.JIMENG_ACCESS_KEY.substring(0, 5) : 'N/A');
+
 // 检查是否有真实的API密钥
 const hasRealKeys =
   process.env.JIMENG_ACCESS_KEY &&
@@ -52,13 +55,8 @@ async function runIntegrationTests() {
     try {
       const sizes = api.getRecommendedSizes();
       console.log('✅ 推荐尺寸配置获取成功');
-      console.log(
-        '   标清1K尺寸:',
-        Object.keys(sizes.STANDARD_1K).length,
-        '种'
-      );
-      console.log('   高清2K尺寸:', Object.keys(sizes.HD_2K).length, '种');
-      console.log('   示例尺寸:', sizes.STANDARD_1K['1:1']);
+      console.log('   总共支持的尺寸数量:', Object.keys(sizes).length, '种');
+      console.log('   示例尺寸 (1K_1:1):', sizes['1K_1:1']);
     } catch (error) {
       console.log('❌ 推荐尺寸配置获取失败:', error.message);
     }
@@ -102,8 +100,8 @@ async function runIntegrationTests() {
         prompt: 'a simple test image, minimalist design, high quality',
         use_pre_llm: false, // 关闭文本扩写以加快速度
         seed: 42,
-        width: 512,
-        height: 512,
+        width: 1024,
+        height: 1024,
       });
 
       console.log('✅ 图像生成请求成功');
@@ -118,7 +116,7 @@ async function runIntegrationTests() {
 
         const queryResult = await api.queryTask(
           generationResult.data.task_id,
-          'jimeng_t2i_v30',
+          'jimeng_t2i_v40',
           {
             return_url: true,
           }
@@ -152,31 +150,52 @@ async function runIntegrationTests() {
 
     // 测试5: 完整流程测试（串行执行，避免并发限制）
     console.log('5️⃣ 测试完整图像生成流程...');
+    console.log('   ⏳ 等待 10 秒以避免 API 速率限制...');
+    await new Promise(resolve => setTimeout(resolve, 10000));
     try {
       console.log('   开始生成图像并等待完成...');
       console.log('   注意：此测试将等待图像生成完成，可能需要较长时间...');
 
-      const fullResult = await api.generateImageAndWait(
-        {
-          prompt:
-            'a beautiful landscape with mountains and lake, photorealistic',
-          use_pre_llm: true,
-          seed: 123,
-          width: 1024,
-          height: 1024,
-        },
-        {
-          return_url: true,
-          logo_info: {
-            add_logo: true,
-            position: 0, // 右下角
-            language: 0, // 中文
-            opacity: 0.3,
-            logo_text_content: 'AI生成',
-          },
-        },
-        120000 // 最多等待2分钟，避免测试时间过长
-      );
+      // 提交任务
+      const submitResult = await api.generateImage({
+        prompt: 'a beautiful landscape with mountains and lake, photorealistic',
+        seed: 123,
+        width: 1024,
+        height: 1024,
+      });
+      
+      const taskId = submitResult.data?.task_id;
+      if (!taskId) throw new Error('未能获取任务ID');
+      
+      console.log('   任务已提交，ID:', taskId);
+      
+      // 轮询直到完成
+      let status = 'in_queue';
+      let fullResult = null;
+      let attempts = 0;
+      const maxAttempts = 40; // 2 minutes
+      
+      while (attempts < maxAttempts && (status === 'in_queue' || status === 'generating')) {
+        await new Promise(resolve => setTimeout(resolve, 3000));
+        attempts++;
+        
+        const queryRes = await api.queryTask(taskId, 'jimeng_t2i_v40', {
+            return_url: true,
+            logo_info: {
+                add_logo: true,
+                position: 0,
+                language: 0,
+                opacity: 0.3,
+                logo_text_content: 'AI生成',
+            },
+        });
+        
+        status = queryRes.data?.status;
+        fullResult = queryRes;
+        console.log(`   [${attempts}/${maxAttempts}] 状态: ${status}`);
+        
+        if (status === 'done' || status === 'failed') break;
+      }
 
       console.log('✅ 完整流程测试成功');
       console.log('   最终状态:', fullResult.data?.status);
@@ -197,6 +216,8 @@ async function runIntegrationTests() {
     console.log('');
 
     console.log('🎉 所有集成测试完成！');
+    console.log('   ⏳ 等待 5 秒以确保 API 状态清理...');
+    await new Promise(resolve => setTimeout(resolve, 5000));
   } catch (error) {
     console.error('❌ 集成测试过程中发生错误:', error.message);
     process.exit(1);

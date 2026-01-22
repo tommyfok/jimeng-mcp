@@ -11,13 +11,14 @@ export declare class JimengAPI {
     private auth;
     constructor(config: JimengConfig);
     /**
-     * 生成图像（文生图，提交任务）
+     * 生成图像（提交任务）
+     * 统一接口，支持文生图和图生图（通过传入image_urls）
      * @param request 图像生成请求参数
      * @returns 任务提交响应
      */
     generateImage(request: Partial<ImageGenerationRequest>): Promise<ImageGenerationResponse>;
     /**
-     * 图生图3.0智能参考（提交任务）
+     * 图生图接口（兼容性包装）
      * @param request 图生图请求参数
      * @returns 任务提交响应
      */
@@ -35,49 +36,49 @@ export declare class JimengAPI {
      * @returns 推荐尺寸配置
      */
     getRecommendedSizes(): {
-        readonly STANDARD_1K: {
-            readonly '1:1': {
-                readonly width: 1328;
-                readonly height: 1328;
-            };
-            readonly '4:3': {
-                readonly width: 1472;
-                readonly height: 1104;
-            };
-            readonly '3:2': {
-                readonly width: 1584;
-                readonly height: 1056;
-            };
-            readonly '16:9': {
-                readonly width: 1664;
-                readonly height: 936;
-            };
-            readonly '21:9': {
-                readonly width: 2016;
-                readonly height: 864;
-            };
+        readonly '1K_1:1': {
+            readonly width: 1024;
+            readonly height: 1024;
         };
-        readonly HD_2K: {
-            readonly '1:1': {
-                readonly width: 2048;
-                readonly height: 2048;
-            };
-            readonly '4:3': {
-                readonly width: 2304;
-                readonly height: 1728;
-            };
-            readonly '3:2': {
-                readonly width: 2496;
-                readonly height: 1664;
-            };
-            readonly '16:9': {
-                readonly width: 2560;
-                readonly height: 1440;
-            };
-            readonly '21:9': {
-                readonly width: 3024;
-                readonly height: 1296;
-            };
+        readonly '2K_1:1': {
+            readonly width: 2048;
+            readonly height: 2048;
+        };
+        readonly '2K_4:3': {
+            readonly width: 2304;
+            readonly height: 1728;
+        };
+        readonly '2K_3:2': {
+            readonly width: 2496;
+            readonly height: 1664;
+        };
+        readonly '2K_16:9': {
+            readonly width: 2560;
+            readonly height: 1440;
+        };
+        readonly '2K_21:9': {
+            readonly width: 3024;
+            readonly height: 1296;
+        };
+        readonly '4K_1:1': {
+            readonly width: 4096;
+            readonly height: 4096;
+        };
+        readonly '4K_4:3': {
+            readonly width: 4694;
+            readonly height: 3520;
+        };
+        readonly '4K_3:2': {
+            readonly width: 4992;
+            readonly height: 3328;
+        };
+        readonly '4K_16:9': {
+            readonly width: 5404;
+            readonly height: 3040;
+        };
+        readonly '4K_21:9': {
+            readonly width: 6198;
+            readonly height: 2656;
         };
     };
     /**
@@ -85,25 +86,9 @@ export declare class JimengAPI {
      * @returns 图生图推荐尺寸配置
      */
     getImageToImageRecommendedSizes(): {
-        readonly '1:1': {
-            readonly width: 1328;
-            readonly height: 1328;
-        };
-        readonly '4:3': {
-            readonly width: 1472;
-            readonly height: 1104;
-        };
-        readonly '3:2': {
-            readonly width: 1584;
-            readonly height: 1056;
-        };
-        readonly '16:9': {
-            readonly width: 1664;
-            readonly height: 936;
-        };
-        readonly '21:9': {
-            readonly width: 2016;
-            readonly height: 864;
+        readonly '1K_1:1': {
+            readonly width: 1024;
+            readonly height: 1024;
         };
     };
     /**
@@ -138,25 +123,19 @@ export declare class JimengAPI {
      * @returns 图片输入限制
      */
     getImageLimits(): {
-        readonly MAX_SIZE_MB: 4.7;
+        readonly MAX_SIZE_MB: 15;
         readonly MAX_RESOLUTION: 4096;
         readonly MAX_ASPECT_RATIO: 3;
         readonly SUPPORTED_FORMATS: readonly ["JPEG", "PNG"];
+        readonly MAX_COUNT: 10;
     };
     /**
-     * 验证图像尺寸是否有效（文生图）
+     * 验证图像尺寸是否有效
      * @param width 宽度
      * @param height 高度
      * @returns 是否有效
      */
     validateImageSize(width: number, height: number): boolean;
-    /**
-     * 验证图生图图像尺寸是否有效
-     * @param width 宽度
-     * @param height 高度
-     * @returns 是否有效
-     */
-    validateImageToImageSize(width: number, height: number): boolean;
     /**
      * 验证提示词长度
      * @param prompt 提示词
@@ -169,11 +148,6 @@ export declare class JimengAPI {
      * @returns 是否有效
      */
     validateScale(scale: number): boolean;
-    /**
-     * 验证图生图请求参数
-     * @param request 图生图请求参数
-     */
-    private validateImageToImageRequest;
     /**
      * 将图片文件转换为base64编码
      * @param filePath 图片文件路径

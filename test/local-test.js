@@ -7,10 +7,20 @@
 
 import { JimengAPI } from '../dist/jimeng-api.js';
 import { JimengMCPServer } from '../dist/mcp-server.js';
-import { readFileSync } from 'fs';
+import dotenv from 'dotenv';
 
-// 读取测试配置
-const config = JSON.parse(readFileSync('./test-config.json', 'utf8'));
+// 加载环境变量
+dotenv.config();
+
+// 使用环境变量配置
+const config = {
+  accessKey: process.env.JIMENG_ACCESS_KEY || 'test_access_key',
+  secretKey: process.env.JIMENG_SECRET_KEY || 'test_secret_key',
+  endpoint: process.env.JIMENG_ENDPOINT || 'https://visual.volcengineapi.com',
+  region: process.env.JIMENG_REGION || 'cn-north-1',
+  service: process.env.JIMENG_SERVICE || 'cv',
+  esEndpoint: process.env.ES_ENDPOINT
+};
 
 console.log('🧪 开始本地测试...\n');
 
@@ -52,8 +62,7 @@ try {
 console.log('4️⃣ 测试工具列表...');
 try {
   const tools = [
-    { name: 'text_to_image', description: '使用即梦API生成图像' },
-    { name: 'image_to_image', description: '基于输入图片生成新图像' },
+    { name: 'generate_image', description: '使用即梦AI 4.0生成图像' },
     { name: 'query_task', description: '查询图像生成任务的状态和结果' },
   ];
 

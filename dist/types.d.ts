@@ -14,21 +14,17 @@ export interface JimengConfig {
 export interface ImageGenerationRequest {
     req_key: string;
     prompt: string;
-    use_pre_llm?: boolean;
-    seed?: number;
-    width?: number;
-    height?: number;
-}
-export interface ImageToImageRequest {
-    req_key: string;
-    prompt: string;
-    binary_data_base64?: string[];
     image_urls?: string[];
-    seed?: number;
-    scale?: number;
+    size?: number;
     width?: number;
     height?: number;
+    scale?: number;
+    force_single?: boolean;
+    min_ratio?: number;
+    max_ratio?: number;
+    seed?: number;
 }
+export type JimengImageRequest = ImageGenerationRequest;
 export interface ImageGenerationResponse {
     code: string;
     data: {
@@ -39,16 +35,8 @@ export interface ImageGenerationResponse {
     status: string;
     time_elapsed: string;
 }
-export interface ImageToImageResponse {
-    code: string;
-    data: {
-        task_id: string;
-    };
-    message: string;
-    request_id: string;
-    status: string;
-    time_elapsed: string;
-}
+export type ImageToImageRequest = ImageGenerationRequest;
+export type ImageToImageResponse = ImageGenerationResponse;
 export interface TaskQueryRequest {
     req_key: string;
     task_id: string;
@@ -86,7 +74,7 @@ export interface JimengError {
 }
 export declare const JIMENG_API_CONSTANTS: {
     readonly REQ_KEY_T2I: "jimeng_t2i_v40";
-    readonly REQ_KEY_I2I: "jimeng_i2i_v40";
+    readonly REQ_KEY_I2I: "jimeng_t2i_v40";
     readonly ACTION_SUBMIT: "CVSync2AsyncSubmitTask";
     readonly ACTION_QUERY: "CVSync2AsyncGetResult";
     readonly VERSION: "2022-08-31";
@@ -94,71 +82,55 @@ export declare const JIMENG_API_CONSTANTS: {
     readonly DEFAULT_SERVICE: "cv";
     readonly DEFAULT_ENDPOINT: "https://visual.volcengineapi.com";
     readonly RECOMMENDED_SIZES: {
-        readonly STANDARD_1K: {
-            readonly '1:1': {
-                readonly width: 1328;
-                readonly height: 1328;
-            };
-            readonly '4:3': {
-                readonly width: 1472;
-                readonly height: 1104;
-            };
-            readonly '3:2': {
-                readonly width: 1584;
-                readonly height: 1056;
-            };
-            readonly '16:9': {
-                readonly width: 1664;
-                readonly height: 936;
-            };
-            readonly '21:9': {
-                readonly width: 2016;
-                readonly height: 864;
-            };
+        readonly '1K_1:1': {
+            readonly width: 1024;
+            readonly height: 1024;
         };
-        readonly HD_2K: {
-            readonly '1:1': {
-                readonly width: 2048;
-                readonly height: 2048;
-            };
-            readonly '4:3': {
-                readonly width: 2304;
-                readonly height: 1728;
-            };
-            readonly '3:2': {
-                readonly width: 2496;
-                readonly height: 1664;
-            };
-            readonly '16:9': {
-                readonly width: 2560;
-                readonly height: 1440;
-            };
-            readonly '21:9': {
-                readonly width: 3024;
-                readonly height: 1296;
-            };
+        readonly '2K_1:1': {
+            readonly width: 2048;
+            readonly height: 2048;
+        };
+        readonly '2K_4:3': {
+            readonly width: 2304;
+            readonly height: 1728;
+        };
+        readonly '2K_3:2': {
+            readonly width: 2496;
+            readonly height: 1664;
+        };
+        readonly '2K_16:9': {
+            readonly width: 2560;
+            readonly height: 1440;
+        };
+        readonly '2K_21:9': {
+            readonly width: 3024;
+            readonly height: 1296;
+        };
+        readonly '4K_1:1': {
+            readonly width: 4096;
+            readonly height: 4096;
+        };
+        readonly '4K_4:3': {
+            readonly width: 4694;
+            readonly height: 3520;
+        };
+        readonly '4K_3:2': {
+            readonly width: 4992;
+            readonly height: 3328;
+        };
+        readonly '4K_16:9': {
+            readonly width: 5404;
+            readonly height: 3040;
+        };
+        readonly '4K_21:9': {
+            readonly width: 6198;
+            readonly height: 2656;
         };
     };
     readonly I2I_RECOMMENDED_SIZES: {
-        readonly '1:1': {
-            readonly width: 1328;
-            readonly height: 1328;
-        };
-        readonly '4:3': {
-            readonly width: 1472;
-            readonly height: 1104;
-        };
-        readonly '3:2': {
-            readonly width: 1584;
-            readonly height: 1056;
-        };
-        readonly '16:9': {
-            readonly width: 1664;
-            readonly height: 936;
-        };
-        readonly '21:9': {
-            readonly width: 2016;
-            readonly height: 864;
+        readonly '1K_1:1': {
+            readonly width: 1024;
+            readonly height: 1024;
         };
     };
     readonly WATERMARK_POSITIONS: {
@@ -177,10 +149,11 @@ export declare const JIMENG_API_CONSTANTS: {
         readonly DEFAULT: 0.5;
     };
     readonly IMAGE_LIMITS: {
-        readonly MAX_SIZE_MB: 4.7;
+        readonly MAX_SIZE_MB: 15;
         readonly MAX_RESOLUTION: 4096;
         readonly MAX_ASPECT_RATIO: 3;
         readonly SUPPORTED_FORMATS: readonly ["JPEG", "PNG"];
+        readonly MAX_COUNT: 10;
     };
 };
 //# sourceMappingURL=types.d.ts.map

@@ -8,7 +8,8 @@ export const JIMENG_API_CONSTANTS = {
     // 固定值
     // 4.0版本已统一使用jimeng_t2i_v40
     REQ_KEY_T2I: 'jimeng_t2i_v40',
-    REQ_KEY_I2I: 'jimeng_i2i_v40',
+    // 图生图功能已集成到REQ_KEY_T2I中
+    REQ_KEY_I2I: 'jimeng_t2i_v40',
     ACTION_SUBMIT: 'CVSync2AsyncSubmitTask',
     ACTION_QUERY: 'CVSync2AsyncGetResult',
     VERSION: '2022-08-31',
@@ -18,28 +19,24 @@ export const JIMENG_API_CONSTANTS = {
     DEFAULT_ENDPOINT: 'https://visual.volcengineapi.com',
     // 推荐尺寸
     RECOMMENDED_SIZES: {
-        STANDARD_1K: {
-            '1:1': { width: 1328, height: 1328 },
-            '4:3': { width: 1472, height: 1104 },
-            '3:2': { width: 1584, height: 1056 },
-            '16:9': { width: 1664, height: 936 },
-            '21:9': { width: 2016, height: 864 },
-        },
-        HD_2K: {
-            '1:1': { width: 2048, height: 2048 },
-            '4:3': { width: 2304, height: 1728 },
-            '3:2': { width: 2496, height: 1664 },
-            '16:9': { width: 2560, height: 1440 },
-            '21:9': { width: 3024, height: 1296 },
-        },
+        // 1K
+        '1K_1:1': { width: 1024, height: 1024 },
+        // 2K
+        '2K_1:1': { width: 2048, height: 2048 },
+        '2K_4:3': { width: 2304, height: 1728 },
+        '2K_3:2': { width: 2496, height: 1664 },
+        '2K_16:9': { width: 2560, height: 1440 },
+        '2K_21:9': { width: 3024, height: 1296 },
+        // 4K
+        '4K_1:1': { width: 4096, height: 4096 },
+        '4K_4:3': { width: 4694, height: 3520 },
+        '4K_3:2': { width: 4992, height: 3328 },
+        '4K_16:9': { width: 5404, height: 3040 },
+        '4K_21:9': { width: 6198, height: 2656 },
     },
-    // 图生图推荐尺寸（范围在[512, 2016]内）
+    // 图生图推荐尺寸 (使用同样的推荐尺寸)
     I2I_RECOMMENDED_SIZES: {
-        '1:1': { width: 1328, height: 1328 },
-        '4:3': { width: 1472, height: 1104 },
-        '3:2': { width: 1584, height: 1056 },
-        '16:9': { width: 1664, height: 936 },
-        '21:9': { width: 2016, height: 864 },
+        '1K_1:1': { width: 1024, height: 1024 },
     },
     // 水印位置
     WATERMARK_POSITIONS: {
@@ -61,10 +58,11 @@ export const JIMENG_API_CONSTANTS = {
     },
     // 图片输入限制
     IMAGE_LIMITS: {
-        MAX_SIZE_MB: 4.7, // 最大4.7MB
+        MAX_SIZE_MB: 15, // 最大15MB
         MAX_RESOLUTION: 4096, // 最大4096 * 4096
         MAX_ASPECT_RATIO: 3, // 长边与短边比例在3以内
         SUPPORTED_FORMATS: ['JPEG', 'PNG'], // 支持的格式
+        MAX_COUNT: 10, // 最多10张
     },
 };
 //# sourceMappingURL=types.js.map

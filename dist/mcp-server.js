@@ -23,7 +23,7 @@ export class JimengMCPServer {
         // 创建 MCP 服务器实例
         this.server = new McpServer({
             name: 'jimeng-image-mcp',
-            version: '0.3.3',
+            version: '1.0.0',
         });
         this.setupTools();
         this.setupResources();
@@ -161,105 +161,85 @@ export class JimengMCPServer {
         }
     }
     setupTools() {
-        // 文生图工具
-        this.server.registerTool('text_to_image', {
-            title: '图像生成',
-            description: '生成图像（提交任务）',
+        // 统一的图像生成工具
+        this.server.registerTool('generate_image', {
+            title: '即梦图像生成',
+            description: '使用即梦AI 4.0生成图像。支持文生图、图生图、多图参考生成。支持设置尺寸、比例、编辑强度等。',
             inputSchema: {
                 prompt: z.string().describe('图像描述提示词'),
-                use_pre_llm: z.boolean().optional().describe('是否使用预训练LLM'),
-                seed: z.number().optional().describe('随机种子'),
-                width: z.number().describe('图像宽度'),
-                height: z.number().describe('图像高度'),
+                image_urls: z
+                    .array(z.string())
+                    .optional()
+                    .describe('参考图片输入数组（最多10张）。支持：\n• 绝对路径（如 /path/to/image.jpg）\n• 文件协议（如 file:///path/to/image.jpg）\n• 远程URL（如 https://example.com/image.jpg）\n⚠️ 不支持相对路径'),
+                size: z
+                    .number()
+                    .optional()
+                    .describe('生成图片的面积（默认2048*2048），面积和宽高需要2选1传入'),
+                width: z
+                    .number()
+                    .optional()
+                    .describe('图像宽度（默认自动），需同时传width和height'),
+                height: z
+                    .number()
+                    .optional()
+                    .describe('图像高度（默认自动），需同时传width和height'),
+                scale: z
+                    .number()
+                    .optional()
+                    .describe('文本描述影响的程度（0-1之间），默认0.5'),
+                force_single: z
+                    .boolean()
+                    .optional()
+                    .describe('是否强制生成单图（默认false）'),
+                min_ratio: z
+                    .number()
+                    .optional()
+                    .describe('生图结果的宽/高 ≥ min_ratio（默认1/3）'),
+                max_ratio: z
+                    .number()
+                    .optional()
+                    .describe('生图结果的宽/高 ≤ max_ratio（默认3）'),
+                seed: z.number().optional().describe('随机种子（默认-1）'),
             },
-        }, async ({ prompt, use_pre_llm, seed, width, height }) => {
+        }, async ({ prompt, image_urls, size, width, height, scale, force_single, min_ratio, max_ratio, seed, }) => {
             return await this.withConcurrencyControl(async () => {
                 const request = {
                     prompt,
-                    use_pre_llm,
-                    seed,
+                    size,
                     width,
                     height,
+                    scale,
+                    force_single,
+                    min_ratio,
+                    max_ratio,
+                    seed,
                 };
+                // 图片输入处理
+                if (image_urls && image_urls.length > 0) {
+                    // 验证输入格式
+                    this.validateImageInputs(image_urls);
+                    const processedInput = this.processImageInput(image_urls);
+                    const allUrls = [];
+                    // 处理远程URL
+                    if (processedInput.image_urls.length > 0) {
+                        allUrls.push(...processedInput.image_urls);
+                    }
+                    // 处理本地文件 -> Data URL
+                    // 将本地文件转换为Data URL格式传入 image_urls
+                    // 假设为 jpeg 格式，实际可能需要根据文件头判断，但简单起见默认 image/jpeg
+                    if (processedInput.binary_data_base64.length > 0) {
+                        processedInput.binary_data_base64.forEach(base64 => {
+                            allUrls.push(`data:image/jpeg;base64,${base64}`);
+                        });
+                    }
+                    request.image_urls = allUrls;
+                }
                 const response = await this.api.generateImage(request);
                 return {
                     content: [
                         {
                             type: 'text',
                             text: `图像生成任务已提交！\n任务ID: ${response.data.task_id}\n状态: ${response.message}`,
-                        },
-                    ],
-                };
-            });
-        });
-        // 图生图工具
-        this.server.registerTool('image_to_image', {
-            title: '图生图',
-            description: '基于输入图片生成新图像（提交任务）',
-            inputSchema: {
-                prompt: z.string().describe('图像描述提示词'),
-                image_urls: z
-                    .array(z.string())
-                    .optional()
-                    .describe('图片输入数组，支持：\n• 绝对路径（如 /path/to/image.jpg）\n• 文件协议（如 file:///path/to/image.jpg）\n• 远程URL（如 https://example.com/image.jpg）\n⚠️ 不支持相对路径（如 ./image.jpg）'),
-                scale: z.number().optional().describe('编辑强度（0-1之间）'),
-                seed: z.number().optional().describe('随机种子'),
-                width: z.number().optional().describe('图像宽度'),
-                height: z.number().optional().describe('图像高度'),
-            },
-        }, async ({ prompt, image_urls, scale, seed, width, height }) => {
-            return await this.withConcurrencyControl(async () => {
-                const request = {
-                    prompt,
-                    scale,
-                    seed,
-                };
-                // 图片输入处理（支持绝对路径、文件协议和远程URL，不支持相对路径）
-                if (image_urls && image_urls.length > 0) {
-                    // 首先验证输入格式
-                    this.validateImageInputs(image_urls);
-                    const processedInput = this.processImageInput(image_urls);
-                    // 设置处理后的图片输入
-                    if (processedInput.binary_data_base64.length > 0) {
-                        request.binary_data_base64 = processedInput.binary_data_base64;
-                    }
-                    if (processedInput.image_urls.length > 0) {
-                        request.image_urls = processedInput.image_urls;
-                    }
-                    // 检查是否有有效的图片输入
-                    if (processedInput.binary_data_base64.length === 0 &&
-                        processedInput.image_urls.length === 0) {
-                        return {
-                            content: [
-                                {
-                                    type: 'text',
-                                    text: '❌ 没有有效的图片输入。请检查文件路径是否正确，或提供有效的远程URL。',
-                                },
-                            ],
-                        };
-                    }
-                }
-                else {
-                    return {
-                        content: [
-                            {
-                                type: 'text',
-                                text: '❌ 必须提供图片输入。支持：\n• 绝对路径（如 /path/to/image.jpg）\n• 文件协议（如 file:///path/to/image.jpg）\n• 远程URL（如 https://example.com/image.jpg）\n⚠️ 不支持相对路径（如 ./image.jpg）',
-                            },
-                        ],
-                    };
-                }
-                // 如果指定了宽高，则添加到请求中
-                if (width && height) {
-                    request.width = width;
-                    request.height = height;
-                }
-                const response = await this.api.generateImageToImage(request);
-                return {
-                    content: [
-                        {
-                            type: 'text',
-                            text: `图生图任务已提交！\n任务ID: ${response.data.task_id}\n状态: ${response.message}`,
                         },
                     ],
                 };
@@ -274,7 +254,7 @@ export class JimengMCPServer {
                 req_key: z
                     .string()
                     .optional()
-                    .describe('服务标识，可选值：jimeng_t2i_v40（文生图）或 jimeng_i2i_v40（图生图）。如果不提供，默认使用 jimeng_t2i_v40'),
+                    .describe('服务标识，默认使用 jimeng_t2i_v40（4.0版本文生图和图生图统一使用此标识）'),
                 return_url: z.boolean().optional().describe('是否返回URL'),
                 logo_info: z
                     .object({
@@ -350,7 +330,6 @@ export class JimengMCPServer {
             mimeType: 'application/json',
         }, async (uri) => {
             const sizes = this.api.getRecommendedSizes();
-            const i2iSizes = this.api.getImageToImageRecommendedSizes();
             const positions = this.api.getWatermarkPositions();
             const languages = this.api.getWatermarkLanguages();
             const scaleRange = this.api.getScaleRange();
@@ -358,34 +337,24 @@ export class JimengMCPServer {
             const config = {
                 api_info: {
                     name: '即梦图像生成API',
-                    version: '1.0.0',
+                    version: '4.0',
                     description: '基于火山引擎的AI图像生成服务',
                 },
-                // 文生图尺寸配置
-                text_to_image_sizes: {
-                    standard_1k: sizes.STANDARD_1K,
-                    hd_2k: sizes.HD_2K,
-                    constraints: {
-                        width_range: [512, 2048],
-                        height_range: [512, 2048],
-                        aspect_ratio_range: [1 / 3, 3 / 1],
-                    },
-                },
-                // 图生图尺寸配置
-                image_to_image_sizes: {
-                    recommended: i2iSizes,
-                    constraints: {
-                        width_range: [512, 2016],
-                        height_range: [512, 2016],
-                        aspect_ratio_range: [1 / 3, 3 / 1],
-                    },
+                // 尺寸配置
+                recommended_sizes: sizes,
+                // 尺寸约束
+                size_constraints: {
+                    width_range: [1024, 4096], // 只是近似值，实际由面积和比例控制
+                    height_range: [1024, 4096],
+                    area_range: [1024 * 1024, 4096 * 4096],
+                    aspect_ratio_range: [1 / 16, 16],
                 },
                 // 水印配置
                 watermark_options: {
                     positions,
                     languages,
                 },
-                // 图生图编辑强度
+                // 编辑强度
                 scale_range: scaleRange,
                 // 图片输入限制
                 image_limits: limits,
@@ -393,12 +362,10 @@ export class JimengMCPServer {
                 prompt_constraints: {
                     min_length: 1,
                     max_length: 800,
-                    recommended_length: 120,
                 },
                 // 工具说明
                 tools: {
-                    text_to_image: '文生图（提交任务）',
-                    image_to_image: '图生图（提交任务）',
+                    generate_image: '图像生成（支持文生图、图生图、多图参考）',
                     query_task: '查询任务状态',
                 },
             };

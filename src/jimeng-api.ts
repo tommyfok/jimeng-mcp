@@ -102,7 +102,8 @@ export class JimengAPI {
   }
 
   /**
-   * 生成图像（文生图，提交任务）
+   * 生成图像（提交任务）
+   * 统一接口，支持文生图和图生图（通过传入image_urls）
    * @param request 图像生成请求参数
    * @returns 任务提交响应
    */
@@ -114,66 +115,58 @@ export class JimengAPI {
       const payload: ImageGenerationRequest = {
         req_key: JIMENG_API_CONSTANTS.REQ_KEY_T2I,
         prompt: request.prompt || '',
-        use_pre_llm: request.use_pre_llm ?? true,
-        seed: request.seed ?? -1,
       };
+
+      // 可选参数处理
+      if (request.image_urls && request.image_urls.length > 0) {
+        payload.image_urls = request.image_urls;
+      }
+
+      if (request.size) {
+        payload.size = request.size;
+      }
 
       // 如果指定了宽高，则添加到请求中
       if (request.width && request.height) {
         payload.width = request.width;
         payload.height = request.height;
+      }
+
+      if (request.scale !== undefined) {
+        payload.scale = request.scale;
+      }
+
+      if (request.force_single !== undefined) {
+        payload.force_single = request.force_single;
+      }
+
+      if (request.min_ratio !== undefined) {
+        payload.min_ratio = request.min_ratio;
+      }
+
+      if (request.max_ratio !== undefined) {
+        payload.max_ratio = request.max_ratio;
       }
 
       const response = await this.client.post('/', payload);
       return response.data;
     } catch (error: any) {
       quickLogError({ error, msg: 'Fail to generate image' });
-      throw new Error(`文生图失败: ${error.message}`);
+      throw new Error(`生成图像失败: ${error.message}`);
     }
   }
 
   /**
-   * 图生图3.0智能参考（提交任务）
+   * 图生图接口（兼容性包装）
    * @param request 图生图请求参数
    * @returns 任务提交响应
    */
   async generateImageToImage(
     request: Partial<ImageToImageRequest>
   ): Promise<ImageToImageResponse> {
-    try {
-      // 验证输入参数
-      this.validateImageToImageRequest(request);
-
-      // 构建请求体
-      const payload: ImageToImageRequest = {
-        req_key: JIMENG_API_CONSTANTS.REQ_KEY_I2I,
-        prompt: request.prompt || '',
-        seed: request.seed ?? -1,
-        scale: request.scale ?? JIMENG_API_CONSTANTS.SCALE_RANGE.DEFAULT,
-      };
-
-      // 图片输入（二选一）
-      if (request.binary_data_base64 && request.binary_data_base64.length > 0) {
-        payload.binary_data_base64 = request.binary_data_base64;
-      } else if (request.image_urls && request.image_urls.length > 0) {
-        payload.image_urls = request.image_urls;
-      } else {
-        throw new Error('必须提供图片输入：binary_data_base64 或 image_urls');
-      }
-
-      // 如果指定了宽高，则添加到请求中
-      if (request.width && request.height) {
-        payload.width = request.width;
-        payload.height = request.height;
-      }
-
-      const response = await this.client.post('/', payload);
-      return response.data;
-    } catch (error: any) {
-      quickLogError({ error, msg: 'Fail to generate image to image' });
-      throw new Error(`图生图失败: ${error.message}`);
-    }
+    return this.generateImage(request);
   }
+
 
   /**
    * 查询任务状态和结果
@@ -267,41 +260,22 @@ export class JimengAPI {
   }
 
   /**
-   * 验证图像尺寸是否有效（文生图）
+   * 验证图像尺寸是否有效
    * @param width 宽度
    * @param height 高度
    * @returns 是否有效
    */
   validateImageSize(width: number, height: number): boolean {
     // 检查尺寸范围
-    if (width < 512 || width > 2048 || height < 512 || height > 2048) {
+    // 面积和宽高乘积在[1024*1024, 4096*4096]
+    const area = width * height;
+    if (area < 1024 * 1024 || area > 4096 * 4096) {
       return false;
     }
 
-    // 检查宽高比
+    // 检查宽高比 [1/16, 16)
     const ratio = width / height;
-    if (ratio < 1 / 3 || ratio > 3) {
-      return false;
-    }
-
-    return true;
-  }
-
-  /**
-   * 验证图生图图像尺寸是否有效
-   * @param width 宽度
-   * @param height 高度
-   * @returns 是否有效
-   */
-  validateImageToImageSize(width: number, height: number): boolean {
-    // 检查尺寸范围
-    if (width < 512 || width > 2016 || height < 512 || height > 2016) {
-      return false;
-    }
-
-    // 检查宽高比
-    const ratio = width / height;
-    if (ratio < 1 / 3 || ratio > 3) {
+    if (ratio < 1 / 16 || ratio >= 16) {
       return false;
     }
 
@@ -326,45 +300,6 @@ export class JimengAPI {
     return scale >= 0 && scale <= 1;
   }
 
-  /**
-   * 验证图生图请求参数
-   * @param request 图生图请求参数
-   */
-  private validateImageToImageRequest(
-    request: Partial<ImageToImageRequest>
-  ): void {
-    // 验证提示词
-    if (!request.prompt || !this.validatePrompt(request.prompt)) {
-      throw new Error('提示词不能为空且长度不能超过800字符');
-    }
-
-    // 验证图片输入
-    if (!request.binary_data_base64 && !request.image_urls) {
-      throw new Error('必须提供图片输入：binary_data_base64 或 image_urls');
-    }
-
-    if (request.binary_data_base64 && request.binary_data_base64.length === 0) {
-      throw new Error('binary_data_base64 不能为空数组');
-    }
-
-    if (request.image_urls && request.image_urls.length === 0) {
-      throw new Error('image_urls 不能为空数组');
-    }
-
-    // 验证编辑强度
-    if (request.scale !== undefined && !this.validateScale(request.scale)) {
-      throw new Error('编辑强度必须在0到1之间');
-    }
-
-    // 验证尺寸
-    if (request.width && request.height) {
-      if (!this.validateImageToImageSize(request.width, request.height)) {
-        throw new Error(
-          '图像尺寸无效，宽度和高度必须在512到2016之间，且宽高比在1:3到3:1之间'
-        );
-      }
-    }
-  }
 
   /**
    * 将图片文件转换为base64编码

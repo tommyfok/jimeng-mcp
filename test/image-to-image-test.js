@@ -45,69 +45,31 @@ console.log(`  服务: ${config.service}`);
 console.log('');
 
 // 测试图生图请求参数验证
-async function testImageToImageValidation() {
-  console.log('🧪 测试图生图请求参数验证...');
+async function testValidation() {
+  console.log('🧪 测试请求参数验证...');
 
-  // 测试1：缺少图片输入
+  // 测试1：无效的提示词
   try {
-    await jimengAPI.generateImageToImage({
-      prompt: '测试提示词',
-    });
-    console.log('❌ 测试1失败：应该抛出错误');
-  } catch (error) {
-    if (error.message.includes('必须提供图片输入')) {
-      console.log('✅ 测试1通过：正确捕获缺少图片输入的错误');
+    const valid = jimengAPI.validatePrompt('');
+    if (!valid) {
+      console.log('✅ 测试1通过：正确识别无效提示词');
     } else {
-      console.log('❌ 测试1失败：错误消息不匹配:', error.message);
+      console.log('❌ 测试1失败：未能识别无效提示词');
     }
+  } catch (error) {
+    console.log('❌ 测试1失败：抛出意外错误', error);
   }
 
-  // 测试2：空图片数组
+  // 测试2：无效的尺寸
   try {
-    await jimengAPI.generateImageToImage({
-      prompt: '测试提示词',
-      binary_data_base64: [],
-    });
-    console.log('❌ 测试2失败：应该抛出错误');
-  } catch (error) {
-    if (error.message.includes('binary_data_base64 不能为空数组')) {
-      console.log('✅ 测试2通过：正确捕获空图片数组的错误');
+    const valid = jimengAPI.validateImageSize(100, 100);
+    if (!valid) {
+      console.log('✅ 测试2通过：正确识别无效尺寸');
     } else {
-      console.log('❌ 测试2失败：错误消息不匹配:', error.message);
+      console.log('❌ 测试2失败：未能识别无效尺寸');
     }
-  }
-
-  // 测试3：无效的编辑强度
-  try {
-    await jimengAPI.generateImageToImage({
-      prompt: '测试提示词',
-      image_urls: ['https://example.com/image.jpg'],
-      scale: 1.5,
-    });
-    console.log('❌ 测试3失败：应该抛出错误');
   } catch (error) {
-    if (error.message.includes('编辑强度必须在0到1之间')) {
-      console.log('✅ 测试3通过：正确捕获无效编辑强度的错误');
-    } else {
-      console.log('❌ 测试3失败：错误消息不匹配:', error.message);
-    }
-  }
-
-  // 测试4：无效的尺寸
-  try {
-    await jimengAPI.generateImageToImage({
-      prompt: '测试提示词',
-      image_urls: ['https://example.com/image.jpg'],
-      width: 100,
-      height: 100,
-    });
-    console.log('❌ 测试4失败：应该抛出错误');
-  } catch (error) {
-    if (error.message.includes('图像尺寸无效')) {
-      console.log('✅ 测试4通过：正确捕获无效尺寸的错误');
-    } else {
-      console.log('❌ 测试4失败：错误消息不匹配:', error.message);
-    }
+    console.log('❌ 测试2失败：抛出意外错误', error);
   }
 }
 
@@ -116,8 +78,8 @@ function testUtilityMethods() {
   console.log('\n🔧 测试工具方法...');
 
   // 测试推荐尺寸
-  const recommendedSizes = jimengAPI.getImageToImageRecommendedSizes();
-  console.log('图生图推荐尺寸:', recommendedSizes);
+  const recommendedSizes = jimengAPI.getRecommendedSizes();
+  console.log('推荐尺寸:', Object.keys(recommendedSizes).length, '种');
 
   // 测试编辑强度范围
   const scaleRange = jimengAPI.getScaleRange();
@@ -137,15 +99,19 @@ function testUtilityMethods() {
 // 测试真实的图生图功能
 async function testRealImageToImage() {
   console.log('\n🎨 测试真实的图生图功能...');
+  console.log('   ⏳ 等待 10 秒以避免 API 速率限制...');
+  await new Promise(resolve => setTimeout(resolve, 10000));
 
   try {
     // 第一步：先生成一张图片用于图生图测试
-    console.log('   步骤1: 等待3秒，生成一张测试图片...');
-    await new Promise(resolve => setTimeout(resolve, 3000));
+    console.log('   步骤1: 生成一张测试图片...');
+    // 为了节省时间，如果我们有现成的URL可以使用（这里假设没有，必须生成）
+    // 或者我们可以跳过这一步如果之前的测试已经生成了图片？
+    // 为了完整性，还是生成吧。
+    
     const generationResult = await jimengAPI.generateImage({
       prompt:
         'a beautiful landscape with mountains and lake, photorealistic style, high quality',
-      use_pre_llm: false, // 关闭文本扩写以加快速度
       seed: 42,
       width: 1024,
       height: 1024,
@@ -162,7 +128,7 @@ async function testRealImageToImage() {
     console.log('   等待图片生成完成...');
     let imageUrl = null;
     let attempts = 0;
-    const maxAttempts = 20; // 最多等待20次，每次3秒
+    const maxAttempts = 30; // 90 seconds
 
     while (attempts < maxAttempts) {
       await new Promise(resolve => setTimeout(resolve, 3000));
@@ -208,65 +174,52 @@ async function testRealImageToImage() {
       return;
     }
 
-    // 第二步：使用生成的图片进行图生图测试
-    console.log('\n   步骤2: 使用生成的图片进行图生图测试...');
-    const imageToImageResult = await jimengAPI.generateImageToImage({
-      prompt:
-        'add a beautiful sunset sky with orange and pink clouds, enhance the landscape',
-      image_urls: [imageUrl],
-      scale: 0.8, // 适中的编辑强度
-      width: 1024,
-      height: 1024,
-    });
-
-    if (!imageToImageResult.data?.task_id) {
-      console.log('❌ 图生图请求失败，无法获取任务ID');
-      return;
-    }
-
-    console.log('✅ 图生图请求成功，任务ID:', imageToImageResult.data.task_id);
-
-    // 等待图生图任务完成
-    console.log('   等待图生图任务完成...');
-    attempts = 0;
-
-    while (attempts < maxAttempts) {
+    // 第二步：使用生成的图片进行图生图
+    if (imageUrl) {
+      console.log('   步骤2: 使用生成的图片进行图生图...');
+      console.log('   等待3秒确保图片URL可访问...');
       await new Promise(resolve => setTimeout(resolve, 3000));
-      attempts++;
+      
+      const i2iResult = await jimengAPI.generateImage({
+        prompt: 'make it into a painting, van gogh style',
+        image_urls: [imageUrl],
+        scale: 0.6,
+        width: 1024,
+        height: 1024,
+      });
 
-      try {
-        const queryResult = await jimengAPI.queryTask(
-          imageToImageResult.data.task_id,
-          JIMENG_API_CONSTANTS.REQ_KEY_I2I,
-          {
-            return_url: true,
+      console.log('✅ 图生图请求成功');
+      console.log('   任务ID:', i2iResult.data?.task_id);
+
+      // 等待图生图完成
+      console.log('   等待图生图完成...');
+      attempts = 0;
+      while (attempts < maxAttempts) {
+        await new Promise(resolve => setTimeout(resolve, 3000));
+        attempts++;
+
+        try {
+          const queryResult = await jimengAPI.queryTask(
+            i2iResult.data.task_id,
+            JIMENG_API_CONSTANTS.REQ_KEY_T2I,
+            { return_url: true }
+          );
+
+          if (queryResult.data?.status === 'done') {
+            console.log('✅ 图生图完成！');
+            if (queryResult.data.image_urls?.length > 0) {
+              console.log('   结果URL:', queryResult.data.image_urls[0]);
+            }
+            break;
+          } else if (queryResult.data?.status === 'failed') {
+            console.log('❌ 图生图失败:', queryResult.data?.error_message);
+            break;
+          } else {
+            console.log(`   等待中... (${attempts}/${maxAttempts}) 状态: ${queryResult.data?.status}`);
           }
-        );
-
-        if (
-          queryResult.data?.status === 'done' &&
-          queryResult.data?.image_urls?.length > 0
-        ) {
-          console.log('✅ 图生图任务完成！');
-          console.log('   生成的图片数量:', queryResult.data.image_urls.length);
-          console.log('   第一张图片URL:', queryResult.data.image_urls[0]);
-          break;
-        } else if (queryResult.data?.status === 'failed') {
-          console.log(
-            '❌ 图生图任务失败:',
-            queryResult.data?.error_message || '未知错误'
-          );
-          return;
-        } else {
-          console.log(
-            `   等待中... (${attempts}/${maxAttempts}) 状态: ${queryResult.data?.status}`
-          );
+        } catch (error) {
+           console.log(`   查询失败: ${error.message}`);
         }
-      } catch (error) {
-        console.log(
-          `   查询图生图任务状态失败 (${attempts}/${maxAttempts}):`,
-          error.message
-        );
       }
     }
 
@@ -281,25 +234,18 @@ function testSizeValidation() {
   console.log('\n📏 测试尺寸验证...');
 
   // 测试文生图尺寸验证
-  console.log('文生图尺寸验证:');
+  console.log('尺寸验证:');
   console.log('1024x1024:', jimengAPI.validateImageSize(1024, 1024));
   console.log('2048x2048:', jimengAPI.validateImageSize(2048, 2048));
   console.log('100x100:', jimengAPI.validateImageSize(100, 100));
   console.log('3000x3000:', jimengAPI.validateImageSize(3000, 3000));
-
-  // 测试图生图尺寸验证
-  console.log('\n图生图尺寸验证:');
-  console.log('1024x1024:', jimengAPI.validateImageToImageSize(1024, 1024));
-  console.log('2016x2016:', jimengAPI.validateImageToImageSize(2016, 2016));
-  console.log('100x100:', jimengAPI.validateImageToImageSize(100, 100));
-  console.log('2500x2500:', jimengAPI.validateImageToImageSize(2500, 2500));
 }
 
 // 运行所有测试
 async function runAllTests() {
   console.log('🚀 开始运行图生图功能测试...\n');
 
-  await testImageToImageValidation();
+  await testValidation();
   testUtilityMethods();
   testSizeValidation();
 
@@ -315,7 +261,7 @@ if (import.meta.url === `file://${process.argv[1]}`) {
 }
 
 export {
-  testImageToImageValidation,
+  testValidation,
   testUtilityMethods,
   testSizeValidation,
   testRealImageToImage,

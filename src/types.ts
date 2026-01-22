@@ -16,34 +16,25 @@ export interface JimengConfig {
 // 文生图请求参数
 export interface ImageGenerationRequest {
   // 必选参数
-  req_key: string; // 算法名称，取固定值为jimeng_t2i_v30
-  prompt: string; // 用于生成图像的提示词，中英文均可输入。建议长度<=120字符，最长不超过800字符
+  req_key: string; // 服务标识，取固定值: jimeng_t2i_v40
+  prompt: string; // 用于生成图像的提示词，中英文输入均可。建议：最长不超过800字符
 
   // 可选参数
-  use_pre_llm?: boolean; // 开启文本扩写，会针对输入prompt进行扩写优化，如果输入prompt较短建议开启，如果输入prompt较长建议关闭 默认值：true
-  seed?: number; // 随机种子，作为确定扩散初始状态的基础，默认-1（随机）。若随机种子为相同正整数且其他参数均一致，则生成图片极大概率效果一致 默认值：-1
-  width?: number; // 生成图像宽度，系统默认生成1328 * 1328的图像；支持自定义生成图像宽高，宽高比在1:3到3:1之间，长度在[512, 2048]之间
-  height?: number; // 生成图像高度，需同时传width和height才会生效
-}
-
-// 图生图3.0智能参考请求参数
-export interface ImageToImageRequest {
-  // 必选参数
-  req_key: string; // 服务标识，取固定值: jimeng_i2i_v30
-  prompt: string; // 用于编辑图像的提示词，建议长度<=120字符，最长不超过800字符
-
-  // 图片输入（二选一）
-  binary_data_base64?: string[]; // 图片文件base64编码，需输入1张图片
-  image_urls?: string[]; // 图片文件URL，需输入1张图片
-
-  // 可选参数
+  image_urls?: string[]; // 图片文件URL，支持输入0至10张图
+  size?: number; // 生成图片的面积，默认值：4194304 (2048*2048)
+  width?: number; // 生成图像宽高，需同时传width和height才会生效
+  height?: number; // 生成图像宽高，需同时传width和height才会生效
+  scale?: number; // 文本描述影响的程度，默认值：0.5，取值范围：[0, 1]
+  force_single?: boolean; // 是否强制生成单图，默认值：false
+  min_ratio?: number; // 生图结果的宽/高 ≥ min_ratio，默认值：1/3
+  max_ratio?: number; // 生图结果的宽/高 ≤ max_ratio，默认值：3
   seed?: number; // 随机种子，作为确定扩散初始状态的基础，默认-1（随机）
-  scale?: number; // 文本描述影响的程度，该值越大代表文本描述影响程度越大，且输入图片影响程度越小，默认值：0.5，取值范围：[0, 1]
-  width?: number; // 生成图像宽度，系统默认生成1328 * 1328的图像；支持自定义生成图像宽高，范围在[512, 2016]内
-  height?: number; // 生成图像高度，需同时传width和height才会生效
 }
 
-// 文生图返回参数
+// 统一后的请求参数，不再区分文生图和图生图接口
+export type JimengImageRequest = ImageGenerationRequest;
+
+// 响应参数保持通用结构
 export interface ImageGenerationResponse {
   code: string;
   data: {
@@ -55,17 +46,9 @@ export interface ImageGenerationResponse {
   time_elapsed: string;
 }
 
-// 图生图返回参数
-export interface ImageToImageResponse {
-  code: string;
-  data: {
-    task_id: string; // 任务ID，用于查询结果
-  };
-  message: string;
-  request_id: string;
-  status: string;
-  time_elapsed: string;
-}
+// 兼容旧代码的导出
+export type ImageToImageRequest = ImageGenerationRequest;
+export type ImageToImageResponse = ImageGenerationResponse;
 
 // 查询任务请求参数
 export interface TaskQueryRequest {
@@ -117,7 +100,8 @@ export const JIMENG_API_CONSTANTS = {
   // 固定值
   // 4.0版本已统一使用jimeng_t2i_v40
   REQ_KEY_T2I: 'jimeng_t2i_v40',
-  REQ_KEY_I2I: 'jimeng_i2i_v40',
+  // 图生图功能已集成到REQ_KEY_T2I中
+  REQ_KEY_I2I: 'jimeng_t2i_v40',
   ACTION_SUBMIT: 'CVSync2AsyncSubmitTask',
   ACTION_QUERY: 'CVSync2AsyncGetResult',
   VERSION: '2022-08-31',
@@ -129,29 +113,25 @@ export const JIMENG_API_CONSTANTS = {
 
   // 推荐尺寸
   RECOMMENDED_SIZES: {
-    STANDARD_1K: {
-      '1:1': { width: 1328, height: 1328 },
-      '4:3': { width: 1472, height: 1104 },
-      '3:2': { width: 1584, height: 1056 },
-      '16:9': { width: 1664, height: 936 },
-      '21:9': { width: 2016, height: 864 },
-    },
-    HD_2K: {
-      '1:1': { width: 2048, height: 2048 },
-      '4:3': { width: 2304, height: 1728 },
-      '3:2': { width: 2496, height: 1664 },
-      '16:9': { width: 2560, height: 1440 },
-      '21:9': { width: 3024, height: 1296 },
-    },
+    // 1K
+    '1K_1:1': { width: 1024, height: 1024 },
+    // 2K
+    '2K_1:1': { width: 2048, height: 2048 },
+    '2K_4:3': { width: 2304, height: 1728 },
+    '2K_3:2': { width: 2496, height: 1664 },
+    '2K_16:9': { width: 2560, height: 1440 },
+    '2K_21:9': { width: 3024, height: 1296 },
+    // 4K
+    '4K_1:1': { width: 4096, height: 4096 },
+    '4K_4:3': { width: 4694, height: 3520 },
+    '4K_3:2': { width: 4992, height: 3328 },
+    '4K_16:9': { width: 5404, height: 3040 },
+    '4K_21:9': { width: 6198, height: 2656 },
   },
 
-  // 图生图推荐尺寸（范围在[512, 2016]内）
+  // 图生图推荐尺寸 (使用同样的推荐尺寸)
   I2I_RECOMMENDED_SIZES: {
-    '1:1': { width: 1328, height: 1328 },
-    '4:3': { width: 1472, height: 1104 },
-    '3:2': { width: 1584, height: 1056 },
-    '16:9': { width: 1664, height: 936 },
-    '21:9': { width: 2016, height: 864 },
+     '1K_1:1': { width: 1024, height: 1024 },
   },
 
   // 水印位置
@@ -177,9 +157,10 @@ export const JIMENG_API_CONSTANTS = {
 
   // 图片输入限制
   IMAGE_LIMITS: {
-    MAX_SIZE_MB: 4.7, // 最大4.7MB
+    MAX_SIZE_MB: 15, // 最大15MB
     MAX_RESOLUTION: 4096, // 最大4096 * 4096
     MAX_ASPECT_RATIO: 3, // 长边与短边比例在3以内
     SUPPORTED_FORMATS: ['JPEG', 'PNG'], // 支持的格式
+    MAX_COUNT: 10, // 最多10张
   },
 } as const;
